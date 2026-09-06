@@ -32,7 +32,8 @@ export const LoginPage: React.FC = () => {
         navigate('/admin');
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Login failed. Please check credentials.');
+      const msg = err.response?.data?.message || (err.message === 'Network Error' ? 'Cannot connect to backend server. Make sure VITE_API_BASE_URL is set on Vercel and Render server is Live.' : err.message) || 'Login failed. Please check credentials.';
+      setError(msg);
     } finally {
       setLoading(false);
     }
