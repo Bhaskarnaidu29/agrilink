@@ -4,7 +4,8 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
-    "build": "tsc",
+    "build": "prisma generate && tsc",
+    "postinstall": "prisma generate",
     "start": "node dist/server.js",
     "db:start": "\"C:\\Program Files\\MySQL\\MySQL Server 8.4\\bin\\mysqld.exe\" --defaults-file=my.ini",
     "db:push": "prisma db push",
