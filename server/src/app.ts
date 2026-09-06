@@ -26,7 +26,11 @@ app.use('/api/auth/register', authLimiter);
 // API Base Path
 app.use('/api', routes);
 
-// Health check
+// Root & Health check
+app.get('/', (req, res) => {
+  res.json({ status: 'ok', message: 'Welcome to AgriLink API Server', endpoints: '/api', health: '/health' });
+});
+
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'AgriLink API Server', version: '1.0.0' });
 });
