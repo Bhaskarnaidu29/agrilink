@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api/client';
-import { Sprout, UserCheck, Store, ArrowRight, Check } from 'lucide-react';
+import { Sprout, ArrowRight } from 'lucide-react';
 import { UserRole } from '../../types';
 import { Button } from '../../components/ui/Button';
 import { Card, CardContent } from '../../components/ui/Card';
+import { LocationPicker } from '../../components/common/LocationPicker';
+import { LocationResult } from '../../services/locationService';
 
 export const RegisterPage: React.FC = () => {
   const { login } = useAuth();
@@ -21,11 +23,12 @@ export const RegisterPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
-  const [city, setCity] = useState('Vijayawada');
-  const [state, setState] = useState('Andhra Pradesh');
   const [farmName, setFarmName] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [businessType, setBusinessType] = useState('Wholesaler');
+
+  // Location State
+  const [locationData, setLocationData] = useState<LocationResult | null>(null);
 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -38,6 +41,12 @@ export const RegisterPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (!locationData) {
+      setError('Please search or detect your location before creating an account.');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -47,8 +56,10 @@ export const RegisterPage: React.FC = () => {
         phone,
         password,
         role,
-        city,
-        state,
+        city: locationData.displayName || locationData.name,
+        state: locationData.state || 'Andhra Pradesh',
+        latitude: locationData.latitude,
+        longitude: locationData.longitude,
         ...(role === 'FARMER' && { farmName: farmName || `${name}'s Farm` }),
         ...(role === 'BUYER' && { companyName: companyName || `${name} Traders`, businessType }),
       };
@@ -81,7 +92,7 @@ export const RegisterPage: React.FC = () => {
 
         <Card className="shadow-lg border-gray-200">
           <CardContent className="p-6 sm:p-8 space-y-6">
-            {/* Step 1: Role Selection */}
+            {/* Role Selection */}
             <div className="space-y-2">
               <label className="block text-xs font-bold uppercase text-gray-700">What is your primary goal?</label>
               <div className="grid grid-cols-2 gap-3">
@@ -166,30 +177,12 @@ export const RegisterPage: React.FC = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold uppercase text-gray-700 mb-1">City / Mandal</label>
-                  <input
-                    type="text"
-                    required
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    placeholder="e.g. Vijayawada"
-                    className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-agri-500 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold uppercase text-gray-700 mb-1">State</label>
-                  <input
-                    type="text"
-                    required
-                    value={state}
-                    onChange={(e) => setState(e.target.value)}
-                    placeholder="e.g. Andhra Pradesh"
-                    className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-agri-500 focus:outline-none"
-                  />
-                </div>
-              </div>
+              {/* DYNAMIC LOCATION PICKER */}
+              <LocationPicker
+                label="Your Actual Location (Village / Town / City / PIN)"
+                placeholder="Search village, town, city or PIN code (e.g. Gollapudi)"
+                onChange={(loc) => setLocationData(loc)}
+              />
 
               {/* FARMER SPECIFIC */}
               {role === 'FARMER' && (

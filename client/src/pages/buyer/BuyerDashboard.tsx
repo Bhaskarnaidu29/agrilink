@@ -3,11 +3,13 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api/client';
 import { BuyerRequirement, Offer, ProduceListing } from '../../types';
-import { Store, Plus, Search, Edit, Trash2, MapPin, ShieldCheck, ShoppingBag, ArrowRight, UserCheck } from 'lucide-react';
+import { Store, Plus, Search, Edit, Trash2, MapPin, ShieldCheck, ShoppingBag, UserCheck } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Modal } from '../../components/ui/Modal';
+import { LocationPicker } from '../../components/common/LocationPicker';
+import { LocationResult } from '../../services/locationService';
 
 export const BuyerDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -22,12 +24,16 @@ export const BuyerDashboard: React.FC = () => {
   const [editProfileOpen, setEditProfileOpen] = useState<boolean>(false);
   const [companyName, setCompanyName] = useState<string>('');
   const [businessType, setBusinessType] = useState<string>('Wholesaler');
-  const [city, setCity] = useState<string>('');
+  const [profileLocation, setProfileLocation] = useState<LocationResult | null>(null);
 
   // Edit Requirement State
   const [editReq, setEditReq] = useState<BuyerRequirement | null>(null);
   const [editQtyNeeded, setEditQtyNeeded] = useState<number>(0);
   const [editOfferedPrice, setEditOfferedPrice] = useState<number>(0);
+
+  const buyerCity = user?.buyerProfile?.city;
+  const buyerLat = user?.buyerProfile?.latitude;
+  const buyerLng = user?.buyerProfile?.longitude;
 
   const loadBuyerDashboard = async () => {
     try {
@@ -53,14 +59,36 @@ export const BuyerDashboard: React.FC = () => {
   const openProfileModal = () => {
     setCompanyName(user?.buyerProfile?.companyName || '');
     setBusinessType(user?.buyerProfile?.businessType || 'Wholesaler');
-    setCity(user?.buyerProfile?.city || 'Vijayawada');
+    if (buyerCity) {
+      setProfileLocation({
+        id: 'saved-buyer-loc',
+        name: buyerCity,
+        displayName: buyerCity,
+        city: buyerCity,
+        state: user?.buyerProfile?.state || 'Andhra Pradesh',
+        latitude: buyerLat || 16.5193,
+        longitude: buyerLng || 80.6305,
+      });
+    }
     setEditProfileOpen(true);
   };
 
   const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!profileLocation) {
+      alert('Please search or detect your location.');
+      return;
+    }
+
     try {
-      await api.put('/buyers/profile', { companyName, businessType, city });
+      await api.put('/buyers/profile', {
+        companyName,
+        businessType,
+        city: profileLocation.displayName || profileLocation.name,
+        state: profileLocation.state || 'Andhra Pradesh',
+        latitude: profileLocation.latitude,
+        longitude: profileLocation.longitude,
+      });
       setEditProfileOpen(false);
       window.location.reload();
     } catch (err: any) {
@@ -101,7 +129,6 @@ export const BuyerDashboard: React.FC = () => {
     }
   };
 
-  const userCity = user?.buyerProfile?.city || 'Vijayawada';
   const company = user?.buyerProfile?.companyName || user?.name;
   const bType = user?.buyerProfile?.businessType || 'Wholesaler';
 
@@ -117,9 +144,18 @@ export const BuyerDashboard: React.FC = () => {
                 <Edit className="w-4 h-4" />
               </button>
             </div>
-            <p className="text-xs text-gray-500 flex items-center gap-1.5 font-medium">
-              <ShieldCheck className="w-4 h-4 text-sky-600" /> {bType} • Verified Buyer • 📍 {userCity}
-            </p>
+            {buyerCity ? (
+              <p className="text-xs text-gray-600 flex items-center gap-1.5 font-medium">
+                <ShieldCheck className="w-4 h-4 text-sky-600" /> {bType} • Verified Buyer • 📍 {buyerCity}
+              </p>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-rose-600 font-semibold">📍 Location not set</span>
+                <button onClick={openProfileModal} className="text-xs font-bold text-sky-700 underline">
+                  Set Location
+                </button>
+              </div>
+            )}
             <p className="text-xs text-sky-700 font-semibold pt-0.5">Source produce directly from nearby farmers</p>
           </div>
 
@@ -286,7 +322,7 @@ export const BuyerDashboard: React.FC = () => {
           <Modal
             isOpen={editProfileOpen}
             onClose={() => setEditProfileOpen(false)}
-            title="Edit Business Profile"
+            title="Edit Business Profile Location"
           >
             <form onSubmit={handleProfileSubmit} className="space-y-4">
               <div>
@@ -299,6 +335,7 @@ export const BuyerDashboard: React.FC = () => {
                   className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-xl text-sm"
                 />
               </div>
+
               <div>
                 <label className="block text-xs font-bold uppercase text-gray-700 mb-1">Buyer Type</label>
                 <select
@@ -318,16 +355,20 @@ export const BuyerDashboard: React.FC = () => {
                   <option value="Other Business">Other Business</option>
                 </select>
               </div>
-              <div>
-                <label className="block text-xs font-bold uppercase text-gray-700 mb-1">City / Location</label>
-                <input
-                  type="text"
-                  required
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-xl text-sm"
-                />
-              </div>
+
+              {/* DYNAMIC LOCATION PICKER */}
+              <LocationPicker
+                label="Buyer Business Location (Village / Town / PIN)"
+                value={profileLocation ? {
+                  locationName: profileLocation.name,
+                  city: profileLocation.city,
+                  state: profileLocation.state,
+                  latitude: profileLocation.latitude,
+                  longitude: profileLocation.longitude,
+                } : undefined}
+                onChange={(loc) => setProfileLocation(loc)}
+              />
+
               <Button type="submit" variant="primary" className="w-full bg-sky-600">
                 Save Business Profile
               </Button>

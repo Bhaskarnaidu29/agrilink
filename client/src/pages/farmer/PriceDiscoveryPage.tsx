@@ -1,24 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import api from '../../api/client';
-import { Crop, OpportunityAnalysisResult, RecommendedOption } from '../../types';
-import { Search, Trophy, TrendingUp, Truck, DollarSign, MapPin, CheckCircle2, ArrowRight, Table, LayoutGrid, Info, ShieldCheck } from 'lucide-react';
+import { Crop, OpportunityAnalysisResult } from '../../types';
+import { Search, Trophy, TrendingUp, MapPin, CheckCircle2, ArrowRight, Table, LayoutGrid, Info } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { MarketMap } from '../../components/maps/MarketMap';
 import { PriceTrendChart } from '../../components/charts/PriceTrendChart';
+import { LocationPicker } from '../../components/common/LocationPicker';
+import { LocationResult } from '../../services/locationService';
 
 export const PriceDiscoveryPage: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [crops, setCrops] = useState<Crop[]>([]);
   const [selectedCropId, setSelectedCropId] = useState<string>('');
   const [quantityKg, setQuantityKg] = useState<number>(500);
   const [qualityGrade, setQualityGrade] = useState<string>('Grade A');
-  const [locationCity, setLocationCity] = useState<string>('Vijayawada');
-  const [latitude, setLatitude] = useState<number>(16.5062);
-  const [longitude, setLongitude] = useState<number>(80.6480);
+
+  // Location State
+  const [locationData, setLocationData] = useState<LocationResult | null>(null);
 
   const [loading, setLoading] = useState<boolean>(false);
   const [result, setResult] = useState<OpportunityAnalysisResult | null>(null);
@@ -38,21 +42,29 @@ export const PriceDiscoveryPage: React.FC = () => {
       }
     }
     loadCrops();
-  }, []);
 
-  const handleCityChange = (city: string) => {
-    setLocationCity(city);
-    if (city === 'Vijayawada') { setLatitude(16.5062); setLongitude(80.6480); }
-    else if (city === 'Guntur') { setLatitude(16.3067); setLongitude(80.4365); }
-    else if (city === 'Eluru') { setLatitude(16.7107); setLongitude(81.1035); }
-    else if (city === 'Hyderabad') { setLatitude(17.3850); setLongitude(78.4867); }
-    else if (city === 'Kolar') { setLatitude(13.1367); setLongitude(78.1292); }
-    else if (city === 'Delhi') { setLatitude(28.7041); setLongitude(77.1025); }
-  };
+    // Default to farmer profile location if available
+    const farmerCity = user?.farmerProfile?.city;
+    if (farmerCity) {
+      setLocationData({
+        id: 'user-saved-loc',
+        name: farmerCity,
+        displayName: farmerCity,
+        city: farmerCity,
+        state: user?.farmerProfile?.state || 'Andhra Pradesh',
+        latitude: user?.farmerProfile?.latitude || 16.5062,
+        longitude: user?.farmerProfile?.longitude || 80.6480,
+      });
+    }
+  }, [user]);
 
   const handleRunDiscovery = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!selectedCropId) return;
+    if (!locationData) {
+      alert('Please search or detect your location to find nearby buyers.');
+      return;
+    }
 
     setLoading(true);
     try {
@@ -60,15 +72,15 @@ export const PriceDiscoveryPage: React.FC = () => {
         cropId: selectedCropId,
         quantityKg: Number(quantityKg),
         qualityGrade,
-        locationCity,
-        latitude,
-        longitude,
+        locationCity: locationData.displayName || locationData.name,
+        latitude: locationData.latitude,
+        longitude: locationData.longitude,
       });
 
       setResult(res.data);
 
       const histRes = await api.get(`/price-discovery/history?cropId=${selectedCropId}&days=30`);
-      setPriceHistoryData(histRes.data.histories);
+      setPriceHistoryData(histRes.data.histories || []);
     } catch (err: any) {
       console.error('Discovery calculation error:', err);
     } finally {
@@ -77,10 +89,10 @@ export const PriceDiscoveryPage: React.FC = () => {
   };
 
   useEffect(() => {
-    if (selectedCropId) {
+    if (selectedCropId && locationData) {
       handleRunDiscovery();
     }
-  }, [selectedCropId]);
+  }, [selectedCropId, locationData?.latitude, locationData?.longitude]);
 
   const best = result?.bestOpportunity;
 
@@ -143,20 +155,19 @@ export const PriceDiscoveryPage: React.FC = () => {
                 </select>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold uppercase text-gray-700 mb-1">Farm Location</label>
-                <select
-                  value={locationCity}
-                  onChange={(e) => handleCityChange(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm font-bold focus:bg-white focus:ring-2 focus:ring-agri-500 focus:outline-none"
-                >
-                  <option value="Vijayawada">Vijayawada (AP)</option>
-                  <option value="Guntur">Guntur (AP)</option>
-                  <option value="Eluru">Eluru (AP)</option>
-                  <option value="Hyderabad">Hyderabad (TS)</option>
-                  <option value="Kolar">Kolar (KA)</option>
-                  <option value="Delhi">Delhi APMC</option>
-                </select>
+              {/* DYNAMIC LOCATION PICKER */}
+              <div className="lg:col-span-1">
+                <LocationPicker
+                  label="Farm Location"
+                  value={locationData ? {
+                    locationName: locationData.name,
+                    city: locationData.city,
+                    state: locationData.state,
+                    latitude: locationData.latitude,
+                    longitude: locationData.longitude,
+                  } : undefined}
+                  onChange={(loc) => setLocationData(loc)}
+                />
               </div>
 
               <div>

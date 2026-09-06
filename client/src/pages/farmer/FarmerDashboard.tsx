@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api/client';
-import { ProduceListing, Offer, BuyerRequirement, RecommendedOption } from '../../types';
-import { Plus, Search, Package, CheckCircle2, Edit, Trash2, MapPin, Trophy, Handshake, ArrowRight, ShieldCheck, Scale, Star } from 'lucide-react';
+import { ProduceListing, Offer, RecommendedOption } from '../../types';
+import { Plus, Search, Package, Edit, Trash2, MapPin, Trophy, Scale, ShieldCheck } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Modal } from '../../components/ui/Modal';
+import { LocationPicker } from '../../components/common/LocationPicker';
+import { LocationResult } from '../../services/locationService';
 
 export const FarmerDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -30,14 +32,17 @@ export const FarmerDashboard: React.FC = () => {
   // Edit Profile State
   const [editProfileOpen, setEditProfileOpen] = useState<boolean>(false);
   const [farmName, setFarmName] = useState<string>('');
-  const [city, setCity] = useState<string>('');
-  const [address, setAddress] = useState<string>('');
+  const [profileLocation, setProfileLocation] = useState<LocationResult | null>(null);
 
   // Edit Produce State
   const [editProduce, setEditProduce] = useState<ProduceListing | null>(null);
   const [editQuantity, setEditQuantity] = useState<number>(0);
   const [editMinPrice, setEditMinPrice] = useState<number>(0);
   const [editGrade, setEditGrade] = useState<string>('Grade A');
+
+  const farmerCity = user?.farmerProfile?.city;
+  const farmerLat = user?.farmerProfile?.latitude;
+  const farmerLng = user?.farmerProfile?.longitude;
 
   const loadDashboard = async () => {
     try {
@@ -50,17 +55,17 @@ export const FarmerDashboard: React.FC = () => {
       setListings(userListings);
       setOffers(offerRes.data.offers || []);
 
-      // If farmer has listings, run discovery for the first active listing
-      if (userListings.length > 0) {
+      // If farmer has listings or saved location, calculate nearby buyers
+      if (userListings.length > 0 || farmerLat) {
         const primaryListing = userListings[0];
         try {
           const discRes = await api.post('/price-discovery', {
-            cropId: primaryListing.cropId,
-            quantityKg: primaryListing.quantity,
-            qualityGrade: primaryListing.qualityGrade,
-            locationCity: primaryListing.locationCity || user?.farmerProfile?.city || 'Vijayawada',
-            latitude: primaryListing.latitude || user?.farmerProfile?.latitude || 16.5062,
-            longitude: primaryListing.longitude || user?.farmerProfile?.longitude || 80.6480,
+            cropId: primaryListing?.cropId || (await api.get('/crops')).data.crops[0]?.id,
+            quantityKg: primaryListing?.quantity || 500,
+            qualityGrade: primaryListing?.qualityGrade || 'Grade A',
+            locationCity: primaryListing?.locationCity || farmerCity || 'Current Location',
+            latitude: primaryListing?.latitude || farmerLat || 16.5062,
+            longitude: primaryListing?.longitude || farmerLng || 80.6480,
           });
 
           const options: RecommendedOption[] = discRes.data.options || [];
@@ -86,15 +91,36 @@ export const FarmerDashboard: React.FC = () => {
 
   const openProfileModal = () => {
     setFarmName(user?.farmerProfile?.farmName || '');
-    setCity(user?.farmerProfile?.city || 'Vijayawada');
-    setAddress(user?.farmerProfile?.address || '');
+    if (farmerCity) {
+      setProfileLocation({
+        id: 'saved-profile-loc',
+        name: farmerCity,
+        displayName: farmerCity,
+        city: farmerCity,
+        state: user?.farmerProfile?.state || 'Andhra Pradesh',
+        latitude: farmerLat || 16.5062,
+        longitude: farmerLng || 80.6480,
+      });
+    }
     setEditProfileOpen(true);
   };
 
   const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!profileLocation) {
+      alert('Please search or detect your farm location.');
+      return;
+    }
+
     try {
-      await api.put('/farmers/profile', { farmName, city, address });
+      await api.put('/farmers/profile', {
+        farmName,
+        city: profileLocation.displayName || profileLocation.name,
+        address: profileLocation.name,
+        state: profileLocation.state || 'Andhra Pradesh',
+        latitude: profileLocation.latitude,
+        longitude: profileLocation.longitude,
+      });
       setEditProfileOpen(false);
       window.location.reload();
     } catch (err: any) {
@@ -155,9 +181,6 @@ export const FarmerDashboard: React.FC = () => {
     }
   };
 
-  const pendingOffers = offers.filter((o) => o.status === 'PENDING' || o.status === 'COUNTERED');
-  const userCity = user?.farmerProfile?.city || 'Vijayawada';
-
   return (
     <div className="min-h-screen bg-slate-50 py-6 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -170,9 +193,18 @@ export const FarmerDashboard: React.FC = () => {
                 <Edit className="w-4 h-4" />
               </button>
             </div>
-            <p className="text-xs text-gray-500 flex items-center gap-1.5 font-medium">
-              <MapPin className="w-3.5 h-3.5 text-agri-600" /> 📍 {userCity} • {user?.farmerProfile?.farmName || 'My Farm'}
-            </p>
+            {farmerCity ? (
+              <p className="text-xs text-gray-600 flex items-center gap-1.5 font-medium">
+                <MapPin className="w-3.5 h-3.5 text-agri-600" /> 📍 {farmerCity} • {user?.farmerProfile?.farmName || 'My Farm'}
+              </p>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-rose-600 font-semibold">📍 Location not set</span>
+                <button onClick={openProfileModal} className="text-xs font-bold text-agri-700 underline">
+                  Set Location
+                </button>
+              </div>
+            )}
             <p className="text-xs text-agri-700 font-semibold pt-0.5">Find the best buyer for your harvest.</p>
           </div>
 
@@ -330,7 +362,7 @@ export const FarmerDashboard: React.FC = () => {
                 <Card className="text-center py-10 p-6 space-y-3">
                   <Search className="w-10 h-10 text-gray-300 mx-auto" />
                   <p className="text-gray-600 font-medium text-sm">
-                    No buyers found within {distanceFilter} km for your listed crop.
+                    No buyers found within {distanceFilter} km for your harvest.
                   </p>
                   {distanceFilter !== 'all' && (
                     <Button variant="outline" size="sm" onClick={() => setDistanceFilter('all')}>
@@ -352,7 +384,6 @@ export const FarmerDashboard: React.FC = () => {
                             : 'border-gray-200 hover:border-agri-300 shadow-xs'
                         }`}
                       >
-                        {/* Recommendation Badge */}
                         {buyer.isRecommended && (
                           <div className="absolute top-0 right-0 bg-amber-500 text-white text-[10px] font-black px-3 py-1 rounded-bl-xl uppercase tracking-wider flex items-center gap-1 shadow-xs">
                             <Trophy className="w-3 h-3" /> Best Deal
@@ -385,14 +416,12 @@ export const FarmerDashboard: React.FC = () => {
                           </div>
                         </div>
 
-                        {/* Rationale / Explanation */}
                         {buyer.rationale && buyer.rationale.length > 0 && (
                           <p className="text-[11px] text-gray-600 bg-slate-50 p-2 rounded-lg leading-relaxed">
                             💡 {buyer.rationale[0]}
                           </p>
                         )}
 
-                        {/* Actions */}
                         <div className="flex gap-2 pt-1">
                           <Button
                             variant="primary"
@@ -554,11 +583,11 @@ export const FarmerDashboard: React.FC = () => {
           <Modal
             isOpen={editProfileOpen}
             onClose={() => setEditProfileOpen(false)}
-            title="Edit Farm Profile"
+            title="Edit Farm Profile Location"
           >
             <form onSubmit={handleProfileSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold uppercase text-gray-700 mb-1">Farm / Village Name</label>
+                <label className="block text-xs font-bold uppercase text-gray-700 mb-1">Farm Name</label>
                 <input
                   type="text"
                   required
@@ -567,27 +596,22 @@ export const FarmerDashboard: React.FC = () => {
                   className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-xl text-sm"
                 />
               </div>
-              <div>
-                <label className="block text-xs font-bold uppercase text-gray-700 mb-1">City / Mandal</label>
-                <input
-                  type="text"
-                  required
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-xl text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-bold uppercase text-gray-700 mb-1">Address (Optional)</label>
-                <input
-                  type="text"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-xl text-sm"
-                />
-              </div>
+
+              {/* DYNAMIC LOCATION PICKER */}
+              <LocationPicker
+                label="Farm Actual Location (Village / Town / PIN)"
+                value={profileLocation ? {
+                  locationName: profileLocation.name,
+                  city: profileLocation.city,
+                  state: profileLocation.state,
+                  latitude: profileLocation.latitude,
+                  longitude: profileLocation.longitude,
+                } : undefined}
+                onChange={(loc) => setProfileLocation(loc)}
+              />
+
               <Button type="submit" variant="primary" className="w-full bg-agri-600">
-                Save Profile
+                Save Farm Profile
               </Button>
             </form>
           </Modal>

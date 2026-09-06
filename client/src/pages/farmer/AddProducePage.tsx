@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import api from '../../api/client';
 import { Crop } from '../../types';
-import { Sprout, ArrowRight, Check, MapPin, Package, Calendar, DollarSign } from 'lucide-react';
+import { Sprout, ArrowRight, Check, MapPin } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Card, CardContent } from '../../components/ui/Card';
+import { LocationPicker } from '../../components/common/LocationPicker';
+import { LocationResult } from '../../services/locationService';
 
 export const AddProducePage: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [step, setStep] = useState<number>(1);
   const [crops, setCrops] = useState<Crop[]>([]);
@@ -18,13 +22,14 @@ export const AddProducePage: React.FC = () => {
   const [qualityGrade, setQualityGrade] = useState<string>('Grade A');
   const [harvestDate, setHarvestDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [sellingDate, setSellingDate] = useState<string>(new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
-  const [locationCity, setLocationCity] = useState<string>('Vijayawada');
   const [minPrice, setMinPrice] = useState<number>(26);
   const [description, setDescription] = useState<string>('');
 
+  // Location State
+  const [locationData, setLocationData] = useState<LocationResult | null>(null);
+
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
-  const [geoLocating, setGeoLocating] = useState<boolean>(false);
 
   useEffect(() => {
     async function loadCrops() {
@@ -39,36 +44,30 @@ export const AddProducePage: React.FC = () => {
       }
     }
     loadCrops();
-  }, []);
 
-  const handleUseMyLocation = () => {
-    if ('geolocation' in navigator) {
-      setGeoLocating(true);
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          setGeoLocating(false);
-          // Default to Vijayawada or nearest location
-          setLocationCity('Vijayawada');
-        },
-        (err) => {
-          setGeoLocating(false);
-          alert('Could not retrieve browser location. Falling back to saved city.');
-        }
-      );
+    // Default to farmer profile location if available
+    if (user?.farmerProfile?.city || user?.farmerProfile?.address) {
+      setLocationData({
+        id: 'farmer-saved-loc',
+        name: user.farmerProfile.city || user.farmerProfile.address || 'My Location',
+        displayName: user.farmerProfile.city,
+        city: user.farmerProfile.city,
+        state: user.farmerProfile.state || 'Andhra Pradesh',
+        latitude: user.farmerProfile.latitude || 16.5062,
+        longitude: user.farmerProfile.longitude || 80.6480,
+      });
     }
-  };
+  }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!locationData) {
+      setError('Please specify your farm location.');
+      return;
+    }
+
     setLoading(true);
     setError('');
-
-    let latitude = 16.5062;
-    let longitude = 80.6480;
-    if (locationCity === 'Guntur') { latitude = 16.3067; longitude = 80.4365; }
-    if (locationCity === 'Eluru') { latitude = 16.7107; longitude = 81.1035; }
-    if (locationCity === 'Hyderabad') { latitude = 17.3850; longitude = 78.4867; }
-    if (locationCity === 'Kolar') { latitude = 13.1367; longitude = 78.1292; }
 
     try {
       await api.post('/farmers/produce', {
@@ -79,14 +78,14 @@ export const AddProducePage: React.FC = () => {
         qualityGrade,
         harvestDate,
         sellingDate,
-        locationCity,
-        latitude,
-        longitude,
+        locationCity: locationData.displayName || locationData.name,
+        latitude: locationData.latitude,
+        longitude: locationData.longitude,
         minPrice: Number(minPrice),
         description,
       });
 
-      // Immediately show buyers interested near farm
+      // Immediately navigate to price discovery to view matching buyers
       navigate('/price-discovery');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to list produce');
@@ -267,34 +266,22 @@ export const AddProducePage: React.FC = () => {
                 </div>
               )}
 
-              {/* STEP 3 — LOCATION */}
+              {/* STEP 3 — DYNAMIC LOCATION */}
               {step === 3 && (
                 <div className="space-y-4 animate-fade-in">
                   <h3 className="text-lg font-bold text-gray-900 border-b pb-2">STEP 3 — Farm Location</h3>
-                  <div>
-                    <div className="flex justify-between items-center mb-1">
-                      <label className="block text-xs font-bold uppercase text-gray-700">City / Mandal</label>
-                      <button
-                        type="button"
-                        onClick={handleUseMyLocation}
-                        className="text-xs font-bold text-agri-600 hover:text-agri-700 flex items-center gap-1"
-                      >
-                        <MapPin className="w-3.5 h-3.5" />
-                        {geoLocating ? 'Locating...' : 'Use My Location'}
-                      </button>
-                    </div>
-                    <select
-                      value={locationCity}
-                      onChange={(e) => setLocationCity(e.target.value)}
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-base font-bold focus:bg-white focus:ring-2 focus:ring-agri-500 focus:outline-none"
-                    >
-                      <option value="Vijayawada">Vijayawada (AP)</option>
-                      <option value="Guntur">Guntur (AP)</option>
-                      <option value="Eluru">Eluru (AP)</option>
-                      <option value="Hyderabad">Hyderabad (TS)</option>
-                      <option value="Kolar">Kolar (KA)</option>
-                    </select>
-                  </div>
+
+                  <LocationPicker
+                    label="Specify Farm Location (Village / Mandal / PIN)"
+                    value={locationData ? {
+                      locationName: locationData.name,
+                      city: locationData.city,
+                      state: locationData.state,
+                      latitude: locationData.latitude,
+                      longitude: locationData.longitude,
+                    } : undefined}
+                    onChange={(loc) => setLocationData(loc)}
+                  />
 
                   <div>
                     <label className="block text-xs font-bold uppercase text-gray-700 mb-1">Note for Buyers (Optional)</label>
@@ -311,7 +298,13 @@ export const AddProducePage: React.FC = () => {
                     <Button type="button" onClick={() => setStep(2)} variant="outline">
                       Back
                     </Button>
-                    <Button type="button" onClick={() => setStep(4)} variant="primary" className="bg-agri-600 hover:bg-agri-700">
+                    <Button
+                      type="button"
+                      disabled={!locationData}
+                      onClick={() => setStep(4)}
+                      variant="primary"
+                      className="bg-agri-600 hover:bg-agri-700 disabled:opacity-50"
+                    >
                       Next: Review Summary <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
                   </div>
@@ -341,7 +334,7 @@ export const AddProducePage: React.FC = () => {
 
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600 font-medium">Location:</span>
-                      <span className="font-bold text-gray-900">📍 {locationCity}</span>
+                      <span className="font-bold text-gray-900">📍 {locationData?.displayName || locationData?.name}</span>
                     </div>
 
                     <div className="flex justify-between items-center pt-2 border-t border-agri-200/60">
