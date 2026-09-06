@@ -24,7 +24,7 @@ export const OffersPage: React.FC = () => {
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
     offer: Offer | null;
-    actionType: 'ACCEPTED' | 'REJECTED' | null;
+    actionType: 'ACCEPTED' | 'REJECTED' | 'CANCELLED' | null;
   }>({ isOpen: false, offer: null, actionType: null });
 
   const loadOffers = async () => {
@@ -146,7 +146,7 @@ export const OffersPage: React.FC = () => {
               const statusVariant =
                 offer.status === 'ACCEPTED' ? 'success' :
                 offer.status === 'COUNTERED' ? 'warning' :
-                offer.status === 'REJECTED' ? 'danger' : 'info';
+                offer.status === 'REJECTED' || offer.status === 'CANCELLED' ? 'danger' : 'info';
 
               return (
                 <Card key={offer.id} className="p-6 space-y-4 border-gray-200 shadow-xs">
@@ -221,12 +221,21 @@ export const OffersPage: React.FC = () => {
                   {!isClosed && (
                     <div className="pt-2">
                       {isInitiator ? (
-                        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800 flex items-center gap-2">
-                          <Clock className="w-4 h-4 text-amber-600 shrink-0 animate-pulse" />
-                          <div>
-                            <span className="font-bold block">Waiting for {recipientName}'s Response</span>
-                            <span className="text-[11px] text-amber-700">You submitted the latest offer/counter terms. Please wait for recipient decision.</span>
+                        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800 flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-amber-600 shrink-0 animate-pulse" />
+                            <div>
+                              <span className="font-bold block">Waiting for {recipientName}'s Response</span>
+                              <span className="text-[11px] text-amber-700">You submitted the latest terms.</span>
+                            </div>
                           </div>
+                          <button
+                            type="button"
+                            onClick={() => setConfirmModal({ isOpen: true, offer, actionType: 'CANCELLED' })}
+                            className="px-2.5 py-1 bg-white border border-amber-300 text-amber-900 font-bold rounded-lg hover:bg-amber-100 shrink-0"
+                          >
+                            Withdraw Offer
+                          </button>
                         </div>
                       ) : (
                         <div className="flex gap-2 pt-2 border-t border-gray-100">

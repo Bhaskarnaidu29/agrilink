@@ -88,10 +88,10 @@ export async function createOffer(req: AuthRequest, res: Response) {
       },
     });
 
-    // Create Notification for receiver
+    // Create Notification for receiver using targetReceiverId
     await prisma.notification.create({
       data: {
-        userId: data.receiverId,
+        userId: targetReceiverId,
         title: 'New Offer Received 📩',
         message: `${req.user.name} sent an offer for ₹${data.pricePerUnit}/kg (${data.quantity} kg).`,
         type: 'OFFER',
@@ -213,10 +213,10 @@ export async function respondOfferStatus(req: AuthRequest, res: Response) {
   try {
     if (!req.user) return res.status(401).json({ message: 'Unauthorized' });
     const { id } = req.params;
-    const { status } = req.body; // ACCEPTED or REJECTED
+    const { status } = req.body; // ACCEPTED, REJECTED, or CANCELLED (Withdraw)
 
-    if (!['ACCEPTED', 'REJECTED'].includes(status)) {
-      return res.status(400).json({ message: 'Status must be ACCEPTED or REJECTED' });
+    if (!['ACCEPTED', 'REJECTED', 'CANCELLED'].includes(status)) {
+      return res.status(400).json({ message: 'Status must be ACCEPTED, REJECTED, or CANCELLED' });
     }
 
     const offer = await prisma.offer.findUnique({
@@ -243,8 +243,17 @@ export async function respondOfferStatus(req: AuthRequest, res: Response) {
     }
 
     const latestSenderId = offer.negotiations?.[0]?.senderId || offer.senderId;
-    if (req.user.id === latestSenderId) {
-      return res.status(403).json({ message: 'You cannot accept or reject your own offer/counter. Please wait for recipient response.' });
+
+    // Senders can withdraw/cancel their own pending offer
+    if (status === 'CANCELLED') {
+      if (req.user.id !== latestSenderId && req.user.id !== offer.senderId) {
+        return res.status(403).json({ message: 'Only the offer initiator can withdraw this offer.' });
+      }
+    } else {
+      // Recipients accept or reject
+      if (req.user.id === latestSenderId) {
+        return res.status(403).json({ message: 'You cannot accept or reject your own offer/counter. Please wait for recipient response.' });
+      }
     }
 
     const updatedOffer = await prisma.offer.update({
@@ -304,36 +313,51 @@ export async function respondOfferStatus(req: AuthRequest, res: Response) {
           });
         }
 
-        await prisma.transaction.create({
-          data: {
-            offerId: offer.id,
-            produceListingId: offer.produceListingId,
-            buyerRequirementId: offer.buyerRequirementId,
-            farmerId: farmerProf.id,
-            buyerId: buyerProf.id,
-            agreedPrice: offer.pricePerUnit,
-            totalAmount: offer.totalAmount,
-            quantity: offer.quantity,
-            status: 'CONFIRMED',
-            deliveryDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
-          },
-        });
+        try {
+          await prisma.transaction.create({
+            data: {
+              offerId: offer.id,
+              produceListingId: offer.produceListingId,
+              buyerRequirementId: offer.buyerRequirementId,
+              farmerId: farmerProf.id,
+              buyerId: buyerProf.id,
+              agreedPrice: offer.pricePerUnit,
+              totalAmount: offer.totalAmount,
+              quantity: offer.quantity,
+              status: 'CONFIRMED',
+              deliveryDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+            },
+          });
+        } catch (txError: any) {
+          // Idempotent safety: if transaction already exists, ignore unique constraint error
+          if (!txError.message?.includes('Unique constraint') && txError.code !== 'P2002') {
+            throw txError;
+          }
+        }
       }
     }
 
     const recipientId = req.user.id === offer.senderId ? offer.receiverId : offer.senderId;
+    const notificationTitle = status === 'ACCEPTED' ? 'Deal Confirmed! 🎉' : status === 'CANCELLED' ? 'Offer Withdrawn ↩️' : 'Offer Declined ❌';
+    const notificationMsg = status === 'CANCELLED'
+      ? `${req.user.name} withdrew their offer.`
+      : `Your offer for ₹${offer.pricePerUnit}/kg has been ${status.toLowerCase()}.`;
+
     await prisma.notification.create({
       data: {
         userId: recipientId,
-        title: status === 'ACCEPTED' ? 'Deal Confirmed! 🎉' : 'Offer Declined ❌',
-        message: `Your offer for ₹${offer.pricePerUnit}/kg has been ${status.toLowerCase()}.`,
+        title: notificationTitle,
+        message: notificationMsg,
         type: 'DEALS',
-        link: '/deals',
+        link: status === 'ACCEPTED' ? '/deals' : '/offers',
       },
     });
 
     res.json({ message: `Offer ${status.toLowerCase()} successfully`, offer: updatedOffer });
   } catch (error: any) {
+    if (error.code === 'P2002' || error.message?.includes('Unique constraint')) {
+      return res.status(200).json({ message: 'Your offer has already been accepted.' });
+    }
     res.status(400).json({ message: error.message || 'Failed to update offer status' });
   }
 }

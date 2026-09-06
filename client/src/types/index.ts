@@ -229,3 +229,14 @@ export interface Transaction {
   buyerRequirement?: { crop: Crop };
   review?: { rating: number; comment: string };
 }
+
+export interface Notification {
+  id: string;
+  userId: string;
+  title: string;
+  message: string;
+  type: string;
+  isRead: boolean;
+  link?: string;
+  createdAt: string;
+}

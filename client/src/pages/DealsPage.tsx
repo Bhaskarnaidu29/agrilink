@@ -110,6 +110,8 @@ export const DealsPage: React.FC = () => {
               const contactPhone = counterpartyUser?.phone || (isCurrentFarmer ? tx.buyer?.user?.phone : tx.farmer?.user?.phone) || '';
               const cleanPhone = contactPhone.replace(/[^\d]/g, '');
 
+              const contactRoleLabel = isCurrentFarmer ? 'BUYER CONTACT' : 'FARMER CONTACT';
+
               return (
                 <Card key={tx.id} className="p-6 space-y-4 border-gray-200 shadow-xs">
                   <div className="flex justify-between items-start">
@@ -118,9 +120,6 @@ export const DealsPage: React.FC = () => {
                       <h3 className="text-lg font-black text-gray-900 mt-0.5">{cropName}</h3>
                       <p className="text-xs text-gray-500 font-medium">
                         Farmer: <span className="font-bold text-gray-800">{tx.farmer?.farmName || tx.farmer?.user?.name}</span> ({tx.farmer?.city}) • Buyer: <span className="font-bold text-gray-800">{tx.buyer?.companyName || tx.buyer?.user?.name}</span>
-                      </p>
-                      <p className="text-xs text-agri-700 font-bold mt-1">
-                        🤝 Contact Partner: <span className="text-gray-900">{counterpartyName}</span>
                       </p>
                     </div>
                     <Badge variant={tx.status === 'COMPLETED' ? 'success' : 'info'}>
@@ -143,22 +142,35 @@ export const DealsPage: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Direct Contact Buttons to Counterparty */}
-                  <div className="grid grid-cols-2 gap-2 pt-1">
-                    <a
-                      href={`tel:${contactPhone}`}
-                      className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition"
-                    >
-                      <Phone className="w-3.5 h-3.5 text-slate-600" /> Call {contactPhone || 'Partner'}
-                    </a>
-                    <a
-                      href={`https://wa.me/${cleanPhone.length === 10 ? '91' + cleanPhone : cleanPhone}?text=Hi%20${encodeURIComponent(counterpartyName)}%2C%20regarding%20our%20AgriLink%20deal%20for%20${encodeURIComponent(cropName)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition"
-                    >
-                      <MessageSquare className="w-3.5 h-3.5 text-emerald-600" /> WhatsApp
-                    </a>
+                  {/* Explicit Role Counterparty Contact Section */}
+                  <div className="p-3.5 bg-emerald-50/70 border border-emerald-200/80 rounded-2xl space-y-2 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-black text-emerald-900 uppercase tracking-wider flex items-center gap-1">
+                        📞 {contactRoleLabel}
+                      </span>
+                      <span className="text-xs font-bold text-emerald-950">{contactPhone || 'Not provided'}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-xs text-gray-700">
+                      <span className="text-gray-500">Name:</span>
+                      <span className="font-bold text-gray-900">{counterpartyName}</span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 pt-1 border-t border-emerald-200/60">
+                      <a
+                        href={`tel:${contactPhone}`}
+                        className="px-3 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition shadow-xs"
+                      >
+                        <Phone className="w-3.5 h-3.5 text-emerald-400" /> Call Partner
+                      </a>
+                      <a
+                        href={`https://wa.me/${cleanPhone.length === 10 ? '91' + cleanPhone : cleanPhone}?text=Hi%20${encodeURIComponent(counterpartyName)}%2C%20regarding%20our%20AgriLink%20deal%20for%20${encodeURIComponent(cropName)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition shadow-xs"
+                      >
+                        <MessageSquare className="w-3.5 h-3.5" /> WhatsApp
+                      </a>
+                    </div>
                   </div>
 
                   {/* Progress Status Actions */}

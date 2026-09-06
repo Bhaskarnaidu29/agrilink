@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Sprout, TrendingUp, Handshake, ShieldCheck, LogOut, Menu, X, PlusCircle, Search, Store } from 'lucide-react';
 import { Button } from '../ui/Button';
+import { NotificationBell } from './NotificationBell';
 
 export const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
@@ -197,6 +198,7 @@ export const Navbar: React.FC = () => {
           <div className="hidden md:flex items-center gap-3">
             {user ? (
               <div className="flex items-center gap-3 pl-3 border-l border-gray-200">
+                <NotificationBell />
                 <div className="text-right">
                   <span className="block text-xs font-bold text-gray-900">{user.name}</span>
                   <span className="block text-[11px] font-semibold text-agri-700 uppercase tracking-wider">
@@ -233,6 +235,7 @@ export const Navbar: React.FC = () => {
 
           {/* Mobile menu button */}
           <div className="flex md:hidden items-center gap-2">
+            {user && <NotificationBell />}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-2 rounded-lg text-gray-600 hover:bg-gray-100"

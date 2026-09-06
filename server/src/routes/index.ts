@@ -71,6 +71,14 @@ router.get('/notifications', authenticateJWT, async (req: any, res) => {
   res.json({ notifications });
 });
 
+router.put('/notifications/read-all', authenticateJWT, async (req: any, res) => {
+  await prisma.notification.updateMany({
+    where: { userId: req.user.id, isRead: false },
+    data: { isRead: true },
+  });
+  res.json({ message: 'All marked as read' });
+});
+
 router.put('/notifications/:id/read', authenticateJWT, async (req: any, res) => {
   await prisma.notification.update({
     where: { id: req.params.id },
