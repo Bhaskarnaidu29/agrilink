@@ -221,8 +221,10 @@ export interface Transaction {
   status: 'CONFIRMED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
   deliveryDate?: string;
   createdAt: string;
-  farmer: { farmName: string; city: string; user: { name: string; phone: string } };
-  buyer: { companyName: string; city: string; user: { name: string; phone: string } };
+  farmerId?: string;
+  buyerId?: string;
+  farmer: { id?: string; userId?: string; farmName: string; city: string; user: { id?: string; name: string; phone: string } };
+  buyer: { id?: string; userId?: string; companyName: string; city: string; user: { id?: string; name: string; phone: string } };
   produceListing?: { crop: Crop };
   buyerRequirement?: { crop: Crop };
   review?: { rating: number; comment: string };

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api/client';
+import { useAuth } from '../context/AuthContext';
 import { Transaction } from '../types';
 import { Award, Star, CheckCircle2, Phone, MessageSquare, ShieldCheck, MapPin, Truck } from 'lucide-react';
 import { Button } from '../components/ui/Button';
@@ -8,6 +9,7 @@ import { Badge } from '../components/ui/Badge';
 import { Modal } from '../components/ui/Modal';
 
 export const DealsPage: React.FC = () => {
+  const { user } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -45,10 +47,14 @@ export const DealsPage: React.FC = () => {
     if (!reviewTx) return;
     setReviewLoading(true);
 
+    const isCurrentFarmer = user?.id === reviewTx.farmer?.user?.id || user?.id === reviewTx.farmer?.userId;
+    const targetRevieweeUser = isCurrentFarmer ? reviewTx.buyer?.user : reviewTx.farmer?.user;
+    const targetRevieweeId = targetRevieweeUser?.id || (isCurrentFarmer ? reviewTx.buyer?.userId : reviewTx.farmer?.userId) || '';
+
     try {
       await api.post('/reviews', {
         transactionId: reviewTx.id,
-        revieweeId: reviewTx.buyer?.user?.phone ? reviewTx.buyer.user.phone : reviewTx.farmer.user.phone,
+        revieweeId: targetRevieweeId,
         rating: Number(rating),
         comment,
       });
@@ -91,9 +97,17 @@ export const DealsPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {transactions.map((tx) => {
               const cropName = tx.produceListing?.crop?.name || tx.buyerRequirement?.crop?.name || 'Produce';
-              const farmerPhone = tx.farmer?.user?.phone || '';
-              const buyerPhone = tx.buyer?.user?.phone || '';
-              const contactPhone = farmerPhone || buyerPhone || '9848012345';
+
+              // Determine if logged-in user is farmer or buyer in this deal
+              const isCurrentFarmer = user?.id === tx.farmer?.user?.id || user?.id === tx.farmer?.userId;
+
+              // Counterparty is the OTHER party in the trade
+              const counterpartyUser = isCurrentFarmer ? tx.buyer?.user : tx.farmer?.user;
+              const counterpartyName = isCurrentFarmer
+                ? (tx.buyer?.companyName || tx.buyer?.user?.name || 'Buyer')
+                : (tx.farmer?.farmName || tx.farmer?.user?.name || 'Farmer');
+
+              const contactPhone = counterpartyUser?.phone || (isCurrentFarmer ? tx.buyer?.user?.phone : tx.farmer?.user?.phone) || '';
               const cleanPhone = contactPhone.replace(/[^\d]/g, '');
 
               return (
@@ -103,7 +117,10 @@ export const DealsPage: React.FC = () => {
                       <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Deal #{tx.id.slice(0, 8)}</span>
                       <h3 className="text-lg font-black text-gray-900 mt-0.5">{cropName}</h3>
                       <p className="text-xs text-gray-500 font-medium">
-                        Farmer: {tx.farmer.farmName} ({tx.farmer.city}) • Buyer: {tx.buyer.companyName}
+                        Farmer: <span className="font-bold text-gray-800">{tx.farmer?.farmName || tx.farmer?.user?.name}</span> ({tx.farmer?.city}) • Buyer: <span className="font-bold text-gray-800">{tx.buyer?.companyName || tx.buyer?.user?.name}</span>
+                      </p>
+                      <p className="text-xs text-agri-700 font-bold mt-1">
+                        🤝 Contact Partner: <span className="text-gray-900">{counterpartyName}</span>
                       </p>
                     </div>
                     <Badge variant={tx.status === 'COMPLETED' ? 'success' : 'info'}>
@@ -126,16 +143,16 @@ export const DealsPage: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Direct Contact Buttons */}
+                  {/* Direct Contact Buttons to Counterparty */}
                   <div className="grid grid-cols-2 gap-2 pt-1">
                     <a
                       href={`tel:${contactPhone}`}
                       className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition"
                     >
-                      <Phone className="w-3.5 h-3.5 text-slate-600" /> Call {contactPhone}
+                      <Phone className="w-3.5 h-3.5 text-slate-600" /> Call {contactPhone || 'Partner'}
                     </a>
                     <a
-                      href={`https://wa.me/${cleanPhone.length === 10 ? '91' + cleanPhone : cleanPhone}?text=Hi%20regarding%20our%20AgriLink%20deal%20for%20${encodeURIComponent(cropName)}`}
+                      href={`https://wa.me/${cleanPhone.length === 10 ? '91' + cleanPhone : cleanPhone}?text=Hi%20${encodeURIComponent(counterpartyName)}%2C%20regarding%20our%20AgriLink%20deal%20for%20${encodeURIComponent(cropName)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition"

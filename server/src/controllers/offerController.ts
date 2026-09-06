@@ -253,32 +253,64 @@ export async function respondOfferStatus(req: AuthRequest, res: Response) {
     });
 
     if (status === 'ACCEPTED') {
-      // Determine Farmer & Buyer profiles
-      let farmerProfileId = offer.produceListing?.farmerId || offer.sender.farmerProfile?.id || offer.receiver.farmerProfile?.id;
-      let buyerProfileId = offer.buyerRequirement?.buyerId || offer.sender.buyerProfile?.id || offer.receiver.buyerProfile?.id;
+      const existingTx = await prisma.transaction.findUnique({
+        where: { offerId: offer.id },
+      });
 
-      if (!farmerProfileId) {
-        const farmerProf = await prisma.farmerProfile.findFirst({
-          where: { userId: { in: [offer.senderId, offer.receiverId] } }
-        });
-        farmerProfileId = farmerProf?.id;
-      }
+      if (!existingTx) {
+        let farmerUser = offer.sender.role === 'FARMER' ? offer.sender : (offer.receiver.role === 'FARMER' ? offer.receiver : null);
+        let buyerUser = offer.sender.role === 'BUYER' ? offer.sender : (offer.receiver.role === 'BUYER' ? offer.receiver : null);
 
-      if (!buyerProfileId) {
-        const buyerProf = await prisma.buyerProfile.findFirst({
-          where: { userId: { in: [offer.senderId, offer.receiverId] } }
-        });
-        buyerProfileId = buyerProf?.id;
-      }
+        if (!farmerUser && offer.produceListing?.farmer?.userId) {
+          farmerUser = offer.senderId === offer.produceListing.farmer.userId ? offer.sender : offer.receiver;
+        }
+        if (!buyerUser && offer.buyerRequirement?.buyer?.userId) {
+          buyerUser = offer.senderId === offer.buyerRequirement.buyer.userId ? offer.sender : offer.receiver;
+        }
 
-      if (farmerProfileId && buyerProfileId) {
+        if (!farmerUser) farmerUser = offer.produceListing ? offer.receiver : offer.sender;
+        if (!buyerUser) buyerUser = farmerUser.id === offer.senderId ? offer.receiver : offer.sender;
+
+        let farmerProf = await prisma.farmerProfile.findUnique({ where: { userId: farmerUser.id } });
+        if (!farmerProf) {
+          farmerProf = await prisma.farmerProfile.create({
+            data: {
+              userId: farmerUser.id,
+              farmName: `${farmerUser.name}'s Farm`,
+              address: 'Vijayawada, Andhra Pradesh',
+              city: 'Vijayawada',
+              state: 'Andhra Pradesh',
+              latitude: 16.5062,
+              longitude: 80.6480,
+              verified: true,
+            },
+          });
+        }
+
+        let buyerProf = await prisma.buyerProfile.findUnique({ where: { userId: buyerUser.id } });
+        if (!buyerProf) {
+          buyerProf = await prisma.buyerProfile.create({
+            data: {
+              userId: buyerUser.id,
+              companyName: `${buyerUser.name} Sourcing`,
+              businessType: 'Wholesaler',
+              city: 'Vijayawada',
+              state: 'Andhra Pradesh',
+              latitude: 16.5193,
+              longitude: 80.6305,
+              verified: true,
+              rating: 4.5,
+            },
+          });
+        }
+
         await prisma.transaction.create({
           data: {
             offerId: offer.id,
             produceListingId: offer.produceListingId,
             buyerRequirementId: offer.buyerRequirementId,
-            farmerId: farmerProfileId,
-            buyerId: buyerProfileId,
+            farmerId: farmerProf.id,
+            buyerId: buyerProf.id,
             agreedPrice: offer.pricePerUnit,
             totalAmount: offer.totalAmount,
             quantity: offer.quantity,
