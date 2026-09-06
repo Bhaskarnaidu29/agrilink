@@ -7,6 +7,7 @@ import { Sprout, ArrowRight, Check, MapPin } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Card, CardContent } from '../../components/ui/Card';
 import { LocationPicker } from '../../components/common/LocationPicker';
+import { CropImageUploader } from '../../components/common/CropImageUploader';
 import { LocationResult } from '../../services/locationService';
 
 export const AddProducePage: React.FC = () => {
@@ -24,6 +25,7 @@ export const AddProducePage: React.FC = () => {
   const [sellingDate, setSellingDate] = useState<string>(new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
   const [minPrice, setMinPrice] = useState<number>(26);
   const [description, setDescription] = useState<string>('');
+  const [images, setImages] = useState<string[]>([]);
 
   // Location State
   const [locationData, setLocationData] = useState<LocationResult | null>(null);
@@ -83,6 +85,7 @@ export const AddProducePage: React.FC = () => {
         longitude: locationData.longitude,
         minPrice: Number(minPrice),
         description,
+        images,
       });
 
       // Immediately navigate to price discovery to view matching buyers
@@ -253,6 +256,19 @@ export const AddProducePage: React.FC = () => {
                         className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm"
                       />
                     </div>
+                  </div>
+
+                  {/* AI-ASSISTED MULTI-PHOTO UPLOADER */}
+                  <div className="pt-2">
+                    <label className="block text-xs font-bold uppercase text-gray-700 mb-1">
+                      Batch Photos for AI Visual Assessment (Recommended 4+ Photos)
+                    </label>
+                    <CropImageUploader
+                      cropName={selectedCropObj?.name || 'Produce'}
+                      declaredGrade={qualityGrade}
+                      images={images}
+                      onChange={(imgs) => setImages(imgs)}
+                    />
                   </div>
 
                   <div className="pt-4 flex justify-between">

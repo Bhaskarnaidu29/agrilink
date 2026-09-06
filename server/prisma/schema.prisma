@@ -135,12 +135,19 @@ model ProduceListing {
   locationCity String
   latitude     Float
   longitude    Float
-  minPrice     Float
-  imageUrl     String?
-  description  String?
-  status       String        @default("ACTIVE") // ACTIVE, SOLD, CANCELLED
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  minPrice           Float
+  imageUrl           String?
+  images             String[]      @default([])
+  aiEstimatedGrade   String?
+  aiConfidence       Float?
+  imageConsistency   Float?
+  aiAssessmentStatus String?       @default("NOT_ASSESSED") // ASSESSED, INCONSISTENT, MISMATCH, NOT_ASSESSED
+  aiObservations     String[]      @default([])
+  locationAccuracy   Float?        @default(15.0)
+  description        String?
+  status             String        @default("ACTIVE") // ACTIVE, SOLD, CANCELLED
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
 
   offers       Offer[]
   transactions Transaction[]

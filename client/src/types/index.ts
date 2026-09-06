@@ -67,6 +67,19 @@ export interface MarketPrice {
   crop: Crop;
 }
 
+export interface AgriTrustBreakdown {
+  score: number;
+  badgeLabel: string;
+  isNewFarmer: boolean;
+  breakdown: {
+    farmerVerification: string;
+    completedTransactions: number;
+    buyerRating: string;
+    qualityReliability: string;
+  };
+  explanation: string;
+}
+
 export interface ProduceListing {
   id: string;
   farmerId: string;
@@ -80,8 +93,15 @@ export interface ProduceListing {
   locationCity: string;
   latitude: number;
   longitude: number;
+  locationAccuracy?: number;
   minPrice: number;
   imageUrl?: string;
+  images?: string[];
+  aiEstimatedGrade?: 'Grade A' | 'Grade B' | 'Grade C';
+  aiConfidence?: number;
+  imageConsistency?: number;
+  aiAssessmentStatus?: 'ASSESSED' | 'INCONSISTENT' | 'MISMATCH' | 'NOT_ASSESSED';
+  aiObservations?: string[];
   description?: string;
   status: 'ACTIVE' | 'SOLD' | 'CANCELLED';
   createdAt: string;
@@ -91,7 +111,9 @@ export interface ProduceListing {
     userId?: string;
     farmName: string;
     city: string;
+    verified?: boolean;
     user: { id?: string; name: string; phone: string };
+    agriTrust?: AgriTrustBreakdown;
   };
 }
 

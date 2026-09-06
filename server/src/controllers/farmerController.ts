@@ -2,6 +2,8 @@ import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { prisma } from '../config/db';
 import { z } from 'zod';
+import { analyzeCropImageQuality } from '../services/qualityAssessmentService';
+import { calculateAgriTrustScore } from '../utils/agriTrust';
 
 const createProduceSchema = z.object({
   cropId: z.string(),
@@ -14,8 +16,10 @@ const createProduceSchema = z.object({
   locationCity: z.string(),
   latitude: z.number(),
   longitude: z.number(),
+  locationAccuracy: z.number().optional().default(15.0),
   minPrice: z.number().positive(),
   description: z.string().optional(),
+  images: z.array(z.string()).optional().default([]),
 });
 
 const updateFarmerProfileSchema = z.object({
@@ -41,6 +45,16 @@ export async function createProduceListing(req: AuthRequest, res: Response) {
 
     const data = createProduceSchema.parse(req.body);
 
+    const crop = await prisma.crop.findUnique({ where: { id: data.cropId } });
+    const cropName = crop?.name || 'Produce';
+
+    // AI-Assisted Visual Quality Assessment
+    const aiResult = analyzeCropImageQuality({
+      cropName,
+      declaredGrade: data.qualityGrade,
+      images: data.images,
+    });
+
     const listing = await prisma.produceListing.create({
       data: {
         farmerId: farmerProfile.id,
@@ -54,8 +68,16 @@ export async function createProduceListing(req: AuthRequest, res: Response) {
         locationCity: data.locationCity,
         latitude: data.latitude,
         longitude: data.longitude,
+        locationAccuracy: data.locationAccuracy,
         minPrice: data.minPrice,
         description: data.description,
+        images: data.images,
+        imageUrl: data.images.length > 0 ? data.images[0] : null,
+        aiEstimatedGrade: aiResult.aiEstimatedGrade,
+        aiConfidence: aiResult.aiConfidence,
+        imageConsistency: aiResult.imageConsistency,
+        aiAssessmentStatus: aiResult.aiAssessmentStatus,
+        aiObservations: aiResult.aiObservations,
         status: 'ACTIVE',
       },
       include: { crop: true },
@@ -152,7 +174,46 @@ export async function getAllProduceListings(req: AuthRequest, res: Response) {
       orderBy: { createdAt: 'desc' },
     });
 
-    res.json({ listings });
+    // Compute AgriTrust score for each farmer listing based on real DB history
+    const enrichedListings = await Promise.all(
+      listings.map(async (item) => {
+        let agriTrust = null;
+        if (item.farmer) {
+          const completedDealsCount = await prisma.transaction.count({
+            where: { farmerId: item.farmer.id, status: 'COMPLETED' },
+          });
+
+          const reviews = await prisma.review.findMany({
+            where: { revieweeId: item.farmer.userId },
+          });
+
+          const avgRating =
+            reviews.length > 0
+              ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+              : 4.5;
+
+          agriTrust = calculateAgriTrustScore({
+            verified: item.farmer.verified,
+            completedTransactionsCount: completedDealsCount,
+            averageRating: avgRating,
+            totalReviewsCount: reviews.length,
+            qualityMatchRate: item.aiAssessmentStatus === 'INCONSISTENT' ? 70 : 95,
+          });
+        }
+
+        return {
+          ...item,
+          farmer: item.farmer
+            ? {
+                ...item.farmer,
+                agriTrust,
+              }
+            : null,
+        };
+      })
+    );
+
+    res.json({ listings: enrichedListings });
   } catch (error: any) {
     res.status(500).json({ message: error.message || 'Failed to fetch marketplace produce' });
   }

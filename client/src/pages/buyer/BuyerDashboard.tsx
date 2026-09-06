@@ -3,13 +3,15 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api/client';
 import { BuyerRequirement, Offer, ProduceListing } from '../../types';
-import { Store, Plus, Search, Edit, Trash2, MapPin, ShieldCheck, ShoppingBag, UserCheck } from 'lucide-react';
+import { Store, Plus, Search, Edit, Trash2, MapPin, ShieldCheck, ShoppingBag, UserCheck, Eye, Sparkles } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Modal } from '../../components/ui/Modal';
 import { LocationPicker } from '../../components/common/LocationPicker';
 import { MakeOfferModal } from '../../components/common/MakeOfferModal';
+import { ProduceDetailsModal } from '../../components/common/ProduceDetailsModal';
+import { AgriTrustModal } from '../../components/common/AgriTrustModal';
 import { LocationResult } from '../../services/locationService';
 
 export const BuyerDashboard: React.FC = () => {
@@ -21,9 +23,13 @@ export const BuyerDashboard: React.FC = () => {
   const [matchingFarmers, setMatchingFarmers] = useState<ProduceListing[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
-  // Make Offer Modal State
+  // Make Offer & Inspection Modal State
   const [selectedListingForOffer, setSelectedListingForOffer] = useState<ProduceListing | null>(null);
   const [makeOfferModalOpen, setMakeOfferModalOpen] = useState<boolean>(false);
+  const [selectedListingForDetails, setSelectedListingForDetails] = useState<ProduceListing | null>(null);
+  const [produceDetailsModalOpen, setProduceDetailsModalOpen] = useState<boolean>(false);
+  const [selectedAgriTrust, setSelectedAgriTrust] = useState<any | null>(null);
+  const [agriTrustModalOpen, setAgriTrustModalOpen] = useState<boolean>(false);
 
   // Edit Profile State
   const [editProfileOpen, setEditProfileOpen] = useState<boolean>(false);
@@ -277,49 +283,93 @@ export const BuyerDashboard: React.FC = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {matchingFarmers.slice(0, 6).map((item) => (
-                  <Card key={item.id} className="p-5 space-y-3 border-gray-200 hover:border-sky-300 transition">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <div className="flex items-center gap-1">
-                          <h4 className="font-bold text-gray-900 text-base">{item.farmer?.farmName || item.farmer?.user?.name || 'Local Farm'}</h4>
-                          <UserCheck className="w-4 h-4 text-agri-600" />
+                {matchingFarmers.slice(0, 6).map((item) => {
+                  const agriTrust = item.farmer?.agriTrust;
+                  const thumb = item.images && item.images.length > 0 ? item.images[0] : item.imageUrl;
+
+                  return (
+                    <Card key={item.id} className="p-5 space-y-3 border-gray-200 hover:border-sky-300 transition flex flex-col justify-between">
+                      <div className="space-y-3">
+                        {/* Thumbnail Image Header if present */}
+                        {thumb && (
+                          <div className="relative rounded-xl overflow-hidden bg-slate-900 aspect-video border border-gray-100">
+                            <img src={thumb} alt={item.crop.name} className="w-full h-full object-cover" />
+                            <div className="absolute top-2 left-2 bg-black/70 text-white text-[10px] font-bold px-2 py-0.5 rounded-md backdrop-blur flex items-center gap-1">
+                              <Sparkles className="w-3 h-3 text-agri-400" />
+                              {item.aiAssessmentStatus === 'INCONSISTENT' ? '⚠️ Quality Variance' : 'AI-Assessed'}
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <div className="flex items-center gap-1">
+                              <h4 className="font-bold text-gray-900 text-base">{item.farmer?.farmName || item.farmer?.user?.name || 'Local Farm'}</h4>
+                              <UserCheck className="w-4 h-4 text-agri-600" />
+                            </div>
+                            <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                              <MapPin className="w-3.5 h-3.5 text-sky-600" /> 📍 {item.locationCity}
+                            </p>
+                          </div>
+                          {agriTrust && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedAgriTrust(agriTrust);
+                                setAgriTrustModalOpen(true);
+                              }}
+                              className={`text-[10px] font-black px-2.5 py-1 rounded-full border shadow-2xs transition ${
+                                agriTrust.isNewFarmer ? 'bg-agri-50 text-agri-800 border-agri-200' : 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                              }`}
+                            >
+                              {agriTrust.badgeLabel}
+                            </button>
+                          )}
                         </div>
-                        <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
-                          <MapPin className="w-3.5 h-3.5 text-sky-600" /> 📍 {item.locationCity}
-                        </p>
-                      </div>
-                      <Badge variant="success">Available</Badge>
-                    </div>
 
-                    <div className="bg-slate-50 p-3 rounded-xl space-y-1 text-xs border border-gray-100">
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Crop Produce:</span>
-                        <span className="font-bold text-gray-900">{item.crop.name} ({item.qualityGrade})</span>
+                        <div className="bg-slate-50 p-3 rounded-xl space-y-1 text-xs border border-gray-100">
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">Crop Produce:</span>
+                            <span className="font-bold text-gray-900">{item.crop.name} ({item.qualityGrade})</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">Quantity:</span>
+                            <span className="font-bold text-gray-900">{item.quantity} {item.unit}</span>
+                          </div>
+                          <div className="flex justify-between text-sm pt-1 border-t border-gray-200">
+                            <span className="text-gray-600 font-medium">Asking Price:</span>
+                            <span className="font-black text-sky-700">₹{item.minPrice}/kg</span>
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Quantity:</span>
-                        <span className="font-bold text-gray-900">{item.quantity} {item.unit}</span>
-                      </div>
-                      <div className="flex justify-between text-sm pt-1 border-t border-gray-200">
-                        <span className="text-gray-600 font-medium">Expected Price:</span>
-                        <span className="font-black text-sky-700">₹{item.minPrice}/kg</span>
-                      </div>
-                    </div>
 
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      className="w-full bg-sky-600 hover:bg-sky-700 text-xs"
-                      onClick={() => {
-                        setSelectedListingForOffer(item);
-                        setMakeOfferModalOpen(true);
-                      }}
-                    >
-                      Make Offer
-                    </Button>
-                  </Card>
-                ))}
+                      <div className="flex gap-2 pt-1">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1 text-xs"
+                          onClick={() => {
+                            setSelectedListingForDetails(item);
+                            setProduceDetailsModalOpen(true);
+                          }}
+                        >
+                          <Eye className="w-3.5 h-3.5 mr-1" /> Inspect
+                        </Button>
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          className="flex-1 bg-sky-600 hover:bg-sky-700 text-xs font-bold"
+                          onClick={() => {
+                            setSelectedListingForOffer(item);
+                            setMakeOfferModalOpen(true);
+                          }}
+                        >
+                          Make Offer
+                        </Button>
+                      </div>
+                    </Card>
+                  );
+                })}
               </div>
             )}
           </CardContent>
@@ -429,6 +479,34 @@ export const BuyerDashboard: React.FC = () => {
               setSelectedListingForOffer(null);
             }}
             listing={selectedListingForOffer}
+          />
+        )}
+
+        {/* PRODUCE DETAILS & AI ASSESSMENT INSPECTION MODAL */}
+        {produceDetailsModalOpen && selectedListingForDetails && (
+          <ProduceDetailsModal
+            isOpen={produceDetailsModalOpen}
+            onClose={() => {
+              setProduceDetailsModalOpen(false);
+              setSelectedListingForDetails(null);
+            }}
+            listing={selectedListingForDetails}
+            onMakeOffer={(lst) => {
+              setSelectedListingForOffer(lst);
+              setMakeOfferModalOpen(true);
+            }}
+          />
+        )}
+
+        {/* AGRITRUST BREAKDOWN MODAL */}
+        {agriTrustModalOpen && selectedAgriTrust && (
+          <AgriTrustModal
+            isOpen={agriTrustModalOpen}
+            onClose={() => {
+              setAgriTrustModalOpen(false);
+              setSelectedAgriTrust(null);
+            }}
+            agriTrust={selectedAgriTrust}
           />
         )}
       </div>
