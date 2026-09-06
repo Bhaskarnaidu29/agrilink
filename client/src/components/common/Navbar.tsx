@@ -245,36 +245,50 @@ export const Navbar: React.FC = () => {
 
       {/* Mobile Drawer (Header fallback menu) */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-b border-gray-200 bg-white px-4 pt-2 pb-4 space-y-2">
+        <div className="md:hidden border-b border-gray-200 bg-white px-4 pt-2 pb-4 space-y-2 animate-fade-in">
           {user?.role === 'FARMER' && (
             <>
               <Link
                 to="/farmer/dashboard"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block px-3 py-2 rounded-lg text-base font-semibold text-gray-800 hover:bg-gray-50"
+                className="min-h-[44px] flex items-center px-3 py-2 rounded-lg text-base font-semibold text-gray-800 hover:bg-gray-50"
               >
                 Farmer Home
               </Link>
               <Link
                 to="/farmer/add-produce"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block px-3 py-2 rounded-lg text-base font-semibold text-agri-700 bg-agri-50"
+                className="min-h-[44px] flex items-center px-3 py-2 rounded-lg text-base font-semibold text-agri-700 bg-agri-50"
               >
                 + Sell Produce
               </Link>
               <Link
                 to="/price-discovery"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block px-3 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50"
+                className="min-h-[44px] flex items-center px-3 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50"
               >
                 Find Buyers
               </Link>
               <Link
                 to="/offers"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block px-3 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50"
+                className="min-h-[44px] flex items-center px-3 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50"
               >
                 Offers & Negotiations
+              </Link>
+              <Link
+                to="/deals"
+                onClick={() => setMobileMenuOpen(false)}
+                className="min-h-[44px] flex items-center px-3 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Confirmed Deals
+              </Link>
+              <Link
+                to="/price-history"
+                onClick={() => setMobileMenuOpen(false)}
+                className="min-h-[44px] flex items-center px-3 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Market Prices & Mandis
               </Link>
             </>
           )}
@@ -284,23 +298,44 @@ export const Navbar: React.FC = () => {
               <Link
                 to="/buyer/dashboard"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block px-3 py-2 rounded-lg text-base font-semibold text-gray-800 hover:bg-gray-50"
+                className="min-h-[44px] flex items-center px-3 py-2 rounded-lg text-base font-semibold text-gray-800 hover:bg-gray-50"
               >
                 Buyer Home
               </Link>
               <Link
                 to="/buyer/post-requirement"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block px-3 py-2 rounded-lg text-base font-semibold text-sky-700 bg-sky-50"
+                className="min-h-[44px] flex items-center px-3 py-2 rounded-lg text-base font-semibold text-sky-700 bg-sky-50"
               >
                 + Post Requirement
               </Link>
               <Link
                 to="/marketplace/produce"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block px-3 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50"
+                className="min-h-[44px] flex items-center px-3 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50"
               >
                 Find Farmers
+              </Link>
+              <Link
+                to="/offers"
+                onClick={() => setMobileMenuOpen(false)}
+                className="min-h-[44px] flex items-center px-3 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Offers & Negotiations
+              </Link>
+              <Link
+                to="/deals"
+                onClick={() => setMobileMenuOpen(false)}
+                className="min-h-[44px] flex items-center px-3 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Confirmed Purchases
+              </Link>
+              <Link
+                to="/price-history"
+                onClick={() => setMobileMenuOpen(false)}
+                className="min-h-[44px] flex items-center px-3 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Market Prices & Mandis
               </Link>
             </>
           )}

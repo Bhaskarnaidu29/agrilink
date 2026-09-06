@@ -176,3 +176,29 @@ export async function reverseGeocodeLocation(latitude: number, longitude: number
     accuracy: accuracy ? Math.round(accuracy) : undefined,
   };
 }
+
+export function formatGpsAccuracy(accuracy?: number): { text: string; badgeClass: string } {
+  if (!accuracy || isNaN(accuracy) || accuracy > 1000) {
+    return {
+      text: 'Location accuracy unavailable / low',
+      badgeClass: 'bg-gray-100 text-gray-700 border-gray-300',
+    };
+  }
+  const acc = Math.round(accuracy);
+  if (acc <= 50) {
+    return {
+      text: `Good accuracy (~${acc}m)`,
+      badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-300',
+    };
+  } else if (acc <= 200) {
+    return {
+      text: `Reasonable accuracy (~${acc}m)`,
+      badgeClass: 'bg-blue-100 text-blue-800 border-blue-300',
+    };
+  } else {
+    return {
+      text: `Approximate location (~${acc}m)`,
+      badgeClass: 'bg-amber-100 text-amber-800 border-amber-300',
+    };
+  }
+}

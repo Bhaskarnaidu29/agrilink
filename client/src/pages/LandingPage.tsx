@@ -48,13 +48,16 @@ export const LandingPage: React.FC = () => {
               Live Mandi Rates
             </div>
             <div className="flex items-center gap-6 overflow-x-auto text-slate-300 font-medium whitespace-nowrap scrollbar-none py-0.5">
-              {marketPrices.map((item, idx) => (
-                <span key={idx} className="inline-flex items-center gap-1.5">
-                  <span className="text-white font-bold">{item.crop?.name || 'Produce'}:</span>
-                  <span className="text-agri-300 font-extrabold">₹{item.pricePerUnit}/kg</span>
-                  <span className="text-slate-400 text-[11px]">({item.market?.city || 'APMC'})</span>
-                </span>
-              ))}
+              {marketPrices.map((item, idx) => {
+                const displayPrice = item.pricePerKg || (item.pricePerUnit > 500 ? Math.round((item.pricePerUnit / 100) * 10) / 10 : item.pricePerUnit);
+                return (
+                  <span key={idx} className="inline-flex items-center gap-1.5">
+                    <span className="text-white font-bold">{item.crop?.name || 'Produce'}:</span>
+                    <span className="text-agri-300 font-extrabold">₹{displayPrice}/kg</span>
+                    <span className="text-slate-400 text-[11px]">({item.market?.city || 'APMC'})</span>
+                  </span>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -82,17 +85,18 @@ export const LandingPage: React.FC = () => {
               size="lg"
               variant="primary"
               onClick={handleFarmerCTA}
-              className="w-full sm:w-auto text-lg px-8 py-4 bg-agri-600 hover:bg-agri-500 shadow-lg shadow-agri-600/30"
+              className="w-full sm:w-auto text-lg px-8 py-4 bg-agri-600 hover:bg-agri-500 shadow-lg shadow-agri-600/30 font-bold border border-agri-400/30"
             >
               👨‍🌾 Sell Produce
             </Button>
             <Button
               size="lg"
-              variant="outline"
+              variant="secondary"
               onClick={handleBuyerCTA}
-              className="w-full sm:w-auto text-lg px-8 py-4 border-slate-700 text-white hover:bg-slate-800 bg-slate-900/80"
+              className="w-full sm:w-auto text-lg px-8 py-4 bg-slate-900/90 hover:bg-slate-800 text-white font-bold border-2 border-emerald-500/60 hover:border-emerald-400 shadow-lg focus:ring-2 focus:ring-emerald-400"
             >
-              🏪 Buy Produce
+              <Store className="w-5 h-5 mr-2 inline-block text-emerald-400 shrink-0" />
+              <span>Buy Produce</span>
             </Button>
           </div>
 

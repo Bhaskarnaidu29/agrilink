@@ -1,5 +1,6 @@
 import { prisma } from '../config/db';
 import { calculateDistance, calculateTransportCost, calculateTrendSlope } from '../utils/math';
+import { convertPriceToKg } from '../utils/unitConversion';
 
 export interface OpportunityInput {
   cropId: string;
@@ -110,7 +111,8 @@ export async function analyzeBestSellingOpportunities(
       transportConfig.ratePerKmPerTon
     );
 
-    const grossRevenue = Math.round(input.quantityKg * mp.pricePerUnit);
+    const { pricePerKg } = convertPriceToKg(mp.pricePerUnit, crop.name, crop.defaultUnit);
+    const grossRevenue = Math.round(input.quantityKg * pricePerKg);
     const expectedNetRevenue = grossRevenue - transportCost;
 
     // Fetch 30-day price history for this market
@@ -124,6 +126,9 @@ export async function analyzeBestSellingOpportunities(
       history.map((h) => ({ date: h.date, price: h.averagePrice }))
     );
 
+    // AP Market Priority check (Vijayawada, Guntur, Eluru get higher score)
+    const isLocalApMarket = mp.market.state === 'Andhra Pradesh' || ['Vijayawada', 'Guntur', 'Eluru'].includes(mp.market.city);
+
     rawOptions.push({
       id: `market-${mp.market.id}`,
       marketId: mp.market.id,
@@ -131,14 +136,14 @@ export async function analyzeBestSellingOpportunities(
       name: mp.market.name,
       locationCity: mp.market.city,
       distanceKm,
-      unitPrice: mp.pricePerUnit,
+      unitPrice: pricePerKg,
       grossRevenue,
       transportCost,
       expectedNetRevenue,
       trend: trendObj.direction,
       percentageChange: trendObj.percentageChange,
       qualityMatchGrade: 'All Grades',
-      reliabilityScore: 85, // APMC Market baseline
+      reliabilityScore: isLocalApMarket ? 95 : 85, // Higher baseline for local APMC yards
     });
   }
 
@@ -158,8 +163,9 @@ export async function analyzeBestSellingOpportunities(
       transportConfig.ratePerKmPerTon
     );
 
+    const { pricePerKg: buyerPricePerKg } = convertPriceToKg(br.offeredPrice, crop.name, br.unit);
     const fulfilledQuantity = Math.min(input.quantityKg, br.quantityNeeded);
-    const grossRevenue = Math.round(fulfilledQuantity * br.offeredPrice);
+    const grossRevenue = Math.round(fulfilledQuantity * buyerPricePerKg);
     const expectedNetRevenue = grossRevenue - transportCost;
 
     rawOptions.push({
@@ -169,7 +175,7 @@ export async function analyzeBestSellingOpportunities(
       name: br.buyer.companyName,
       locationCity: br.locationCity,
       distanceKm,
-      unitPrice: br.offeredPrice,
+      unitPrice: buyerPricePerKg,
       grossRevenue,
       transportCost,
       expectedNetRevenue,

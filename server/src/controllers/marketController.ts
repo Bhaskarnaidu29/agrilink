@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { prisma } from '../config/db';
+import { convertPriceToKg } from '../utils/unitConversion';
 
 export async function getMarkets(req: Request, res: Response) {
   try {
@@ -31,7 +32,7 @@ export async function getMarketPrices(req: Request, res: Response) {
   try {
     const { cropId, marketId } = req.query;
 
-    const prices = await prisma.marketPrice.findMany({
+    const pricesData = await prisma.marketPrice.findMany({
       where: {
         ...(cropId && { cropId: String(cropId) }),
         ...(marketId && { marketId: String(marketId) }),
@@ -41,6 +42,18 @@ export async function getMarketPrices(req: Request, res: Response) {
         crop: true,
       },
       orderBy: { date: 'desc' },
+    });
+
+    const prices = pricesData.map((p) => {
+      const conv = convertPriceToKg(p.pricePerUnit, p.crop?.name, p.crop?.defaultUnit);
+      return {
+        ...p,
+        pricePerKg: conv.pricePerKg,
+        pricePerUnit: conv.pricePerKg, // Ensure consistent per-kg display
+        originalPrice: conv.originalPrice,
+        originalUnit: conv.originalUnit,
+        isConverted: conv.isConverted,
+      };
     });
 
     res.json({ prices });

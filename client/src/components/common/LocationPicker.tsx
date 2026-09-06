@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MapPin, Search, Loader2, X, Check, AlertCircle } from 'lucide-react';
-import { searchLocations, reverseGeocodeLocation, LocationResult } from '../../services/locationService';
+import { searchLocations, reverseGeocodeLocation, LocationResult, formatGpsAccuracy } from '../../services/locationService';
 
 interface LocationPickerProps {
   value?: {
@@ -172,11 +172,14 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
               <span className="font-extrabold text-emerald-950 text-sm block">📍 Location Detected</span>
               <span className="font-bold text-gray-900 text-xs block mt-0.5">{pendingConfirmationLocation.name}</span>
               <span className="text-gray-600 text-[11px] block">{pendingConfirmationLocation.displayName}</span>
-              {pendingConfirmationLocation.accuracy && (
-                <span className="inline-block mt-1 px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-semibold text-[10px]">
-                  GPS Accuracy: ~{pendingConfirmationLocation.accuracy}m
-                </span>
-              )}
+              {(() => {
+                const accInfo = formatGpsAccuracy(pendingConfirmationLocation.accuracy);
+                return (
+                  <span className={`inline-block mt-1 px-2 py-0.5 border rounded font-semibold text-[10px] ${accInfo.badgeClass}`}>
+                    GPS Accuracy: {accInfo.text}
+                  </span>
+                );
+              })()}
             </div>
           </div>
           <div className="flex gap-2 pt-1 border-t border-emerald-200">

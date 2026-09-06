@@ -55,7 +55,7 @@ export const MobileBottomNav: React.FC = () => {
         <Link
           to="/deals"
           className={`flex flex-col items-center py-1 px-3 text-xs font-semibold ${
-            isActive('/deals') ? 'text-gray-500' : 'text-gray-500'
+            isActive('/deals') ? 'text-agri-700' : 'text-gray-500'
           }`}
         >
           <User className="w-5 h-5 mb-0.5" />
