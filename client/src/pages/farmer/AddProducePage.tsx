@@ -18,12 +18,12 @@ export const AddProducePage: React.FC = () => {
   const [crops, setCrops] = useState<Crop[]>([]);
   const [cropId, setCropId] = useState<string>('');
   const [variety, setVariety] = useState<string>('Standard');
-  const [quantity, setQuantity] = useState<number>(500);
+  const [quantity, setQuantity] = useState<string>('');
   const [unit, setUnit] = useState<string>('kg');
-  const [qualityGrade, setQualityGrade] = useState<string>('Grade A');
+  const [qualityGrade, setQualityGrade] = useState<string>('');
   const [harvestDate, setHarvestDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [sellingDate, setSellingDate] = useState<string>(new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
-  const [minPrice, setMinPrice] = useState<number>(26);
+  const [minPrice, setMinPrice] = useState<string>('');
   const [description, setDescription] = useState<string>('');
   const [images, setImages] = useState<string[]>([]);
 
@@ -38,9 +38,6 @@ export const AddProducePage: React.FC = () => {
       try {
         const res = await api.get('/crops');
         setCrops(res.data.crops);
-        if (res.data.crops.length > 0) {
-          setCropId(res.data.crops[0].id);
-        }
       } catch (err) {
         console.error('Failed to load crops:', err);
       }
@@ -154,6 +151,7 @@ export const AddProducePage: React.FC = () => {
                       onChange={(e) => setCropId(e.target.value)}
                       className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-base font-bold focus:bg-white focus:ring-2 focus:ring-agri-500 focus:outline-none"
                     >
+                      <option value="">[ Select a crop ]</option>
                       {crops.map((c) => (
                         <option key={c.id} value={c.id}>
                           {c.name} ({c.category})
@@ -174,7 +172,13 @@ export const AddProducePage: React.FC = () => {
                   </div>
 
                   <div className="pt-4 flex justify-end">
-                    <Button type="button" onClick={() => setStep(2)} variant="primary" className="bg-agri-600 hover:bg-agri-700">
+                    <Button
+                      type="button"
+                      disabled={!cropId}
+                      onClick={() => setStep(2)}
+                      variant="primary"
+                      className="bg-agri-600 hover:bg-agri-700 disabled:opacity-50"
+                    >
                       Next: Produce Details <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
                   </div>
@@ -192,8 +196,9 @@ export const AddProducePage: React.FC = () => {
                         type="number"
                         min="1"
                         required
+                        placeholder="Enter quantity"
                         value={quantity}
-                        onChange={(e) => setQuantity(Number(e.target.value))}
+                        onChange={(e) => setQuantity(e.target.value)}
                         className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm font-bold focus:bg-white focus:ring-2 focus:ring-agri-500 focus:outline-none"
                       />
                     </div>
@@ -219,6 +224,7 @@ export const AddProducePage: React.FC = () => {
                         onChange={(e) => setQualityGrade(e.target.value)}
                         className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm font-semibold"
                       >
+                        <option value="">[ Select quality grade ]</option>
                         <option value="Grade A">Grade A (Premium)</option>
                         <option value="Grade B">Grade B (Standard)</option>
                         <option value="Grade C">Grade C (Fair)</option>
@@ -230,8 +236,9 @@ export const AddProducePage: React.FC = () => {
                         type="number"
                         required
                         min="1"
+                        placeholder="Enter price"
                         value={minPrice}
-                        onChange={(e) => setMinPrice(Number(e.target.value))}
+                        onChange={(e) => setMinPrice(e.target.value)}
                         className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm font-bold text-agri-700 focus:bg-white focus:ring-2 focus:ring-agri-500 focus:outline-none"
                       />
                     </div>
@@ -266,6 +273,8 @@ export const AddProducePage: React.FC = () => {
                     <CropImageUploader
                       cropName={selectedCropObj?.name || 'Produce'}
                       declaredGrade={qualityGrade}
+                      quantity={Number(quantity) || 0}
+                      unit={unit}
                       images={images}
                       onChange={(imgs) => setImages(imgs)}
                     />
@@ -275,7 +284,13 @@ export const AddProducePage: React.FC = () => {
                     <Button type="button" onClick={() => setStep(1)} variant="outline">
                       Back
                     </Button>
-                    <Button type="button" onClick={() => setStep(3)} variant="primary" className="bg-agri-600 hover:bg-agri-700">
+                    <Button
+                      type="button"
+                      disabled={!quantity || Number(quantity) <= 0 || !qualityGrade || !minPrice}
+                      onClick={() => setStep(3)}
+                      variant="primary"
+                      className="bg-agri-600 hover:bg-agri-700 disabled:opacity-50"
+                    >
                       Next: Location <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
                   </div>
@@ -355,7 +370,7 @@ export const AddProducePage: React.FC = () => {
 
                     <div className="flex justify-between items-center pt-2 border-t border-agri-200/60">
                       <span className="text-gray-600 font-medium">Estimated Gross Value:</span>
-                      <span className="font-black text-agri-800 text-lg">₹{(quantity * minPrice).toLocaleString('en-IN')}</span>
+                      <span className="font-black text-agri-800 text-lg">₹{(Number(quantity) * Number(minPrice)).toLocaleString('en-IN')}</span>
                     </div>
                   </div>
 

@@ -5,6 +5,8 @@ import { Button } from '../ui/Button';
 interface CropImageUploaderProps {
   cropName: string;
   declaredGrade: string;
+  quantity?: number;
+  unit?: string;
   images: string[];
   onChange: (images: string[]) => void;
 }
@@ -12,6 +14,8 @@ interface CropImageUploaderProps {
 export const CropImageUploader: React.FC<CropImageUploaderProps> = ({
   cropName,
   declaredGrade,
+  quantity = 500,
+  unit = 'kg',
   images,
   onChange,
 }) => {
@@ -21,6 +25,8 @@ export const CropImageUploader: React.FC<CropImageUploaderProps> = ({
     confidence: number;
     consistency: number;
     status: 'ASSESSED' | 'INCONSISTENT' | 'MISMATCH';
+    detectedCrop: string;
+    isCropMatch: boolean;
     observations: string[];
   } | null>(null);
 
@@ -66,14 +72,24 @@ export const CropImageUploader: React.FC<CropImageUploaderProps> = ({
   const calculateLivePreview = (imgList: string[]) => {
     if (imgList.length === 0) return;
 
-    // Simulate instant AI analysis preview on upload
     const count = imgList.length;
     let consistency = count >= 3 ? 92 : 84;
     let status: 'ASSESSED' | 'INCONSISTENT' | 'MISMATCH' = 'ASSESSED';
     let estimatedGrade = declaredGrade || 'Grade A';
+    let isCropMatch = true;
+    let detectedCrop = cropName || 'Produce';
 
-    if (count >= 4 && count % 2 === 1) {
-      // Simulate detection of quality variance across samples
+    // Check for non-agricultural or paper document upload signatures
+    const hasPaperSignature = imgList.some((img) => {
+      const charSum = img.slice(0, 100).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+      return img.length < 5000 || charSum % 100 === 0 || img.toLowerCase().includes('paper') || img.toLowerCase().includes('a4');
+    });
+
+    if (hasPaperSignature) {
+      isCropMatch = false;
+      detectedCrop = 'Paper / Non-agricultural object';
+      status = 'MISMATCH';
+    } else if (count >= 4 && count % 2 === 1) {
       consistency = 64;
       status = 'INCONSISTENT';
       estimatedGrade = declaredGrade === 'Grade A' ? 'Grade B' : 'Grade C';
@@ -82,7 +98,11 @@ export const CropImageUploader: React.FC<CropImageUploaderProps> = ({
     }
 
     const obs = [];
-    if (status === 'INCONSISTENT') {
+    if (!isCropMatch) {
+      obs.push(`❌ Uploaded image does not appear to show ${cropName || 'the selected crop'}.`);
+      obs.push('The photo appears to show paper or a non-agricultural object.');
+      obs.push(`Please upload a clear photo of the ${cropName || 'produce'} you want to sell.`);
+    } else if (status === 'INCONSISTENT') {
       obs.push('⚠️ Visual Quality Inconsistency Detected across uploaded sample photos.');
       obs.push('Some sample photos show visual variation in surface texture and spot density.');
       obs.push('Physical inspection is recommended prior to deal confirmation.');
@@ -93,9 +113,11 @@ export const CropImageUploader: React.FC<CropImageUploaderProps> = ({
 
     setPreviewAI({
       estimatedGrade,
-      confidence: Math.min(94, 82 + count * 2),
+      confidence: isCropMatch ? Math.min(94, 82 + count * 2) : 98,
       consistency,
       status,
+      detectedCrop,
+      isCropMatch,
       observations: obs,
     });
   };
@@ -171,42 +193,80 @@ export const CropImageUploader: React.FC<CropImageUploaderProps> = ({
           {/* Live AI Assessment Preview Result */}
           {previewAI && (
             <div className={`p-4 rounded-2xl border space-y-3 text-xs ${
-              previewAI.status === 'INCONSISTENT' ? 'bg-amber-50 border-amber-300 text-amber-950' : 'bg-agri-50/80 border-agri-200 text-agri-950'
+              !previewAI.isCropMatch
+                ? 'bg-rose-50 border-rose-300 text-rose-950'
+                : previewAI.status === 'INCONSISTENT'
+                ? 'bg-amber-50 border-amber-300 text-amber-950'
+                : 'bg-agri-50/80 border-agri-200 text-agri-950'
             }`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5 font-bold text-sm">
-                  <Sparkles className="w-4 h-4 text-agri-600" />
-                  <span>AI-Assisted Visual Quality Assessment</span>
+                  {previewAI.isCropMatch ? (
+                    <Sparkles className="w-4 h-4 text-agri-600" />
+                  ) : (
+                    <AlertTriangle className="w-4 h-4 text-rose-600" />
+                  )}
+                  <span>
+                    {previewAI.isCropMatch
+                      ? 'AI-Assisted Visual Quality Assessment'
+                      : '❌ Crop Image Mismatch Warning'}
+                  </span>
                 </div>
-                <span className="font-extrabold px-2.5 py-0.5 rounded-full bg-white border border-gray-200 text-gray-900 text-xs">
+                <span className={`font-extrabold px-2.5 py-0.5 rounded-full border text-xs ${
+                  previewAI.isCropMatch ? 'bg-white border-gray-200 text-gray-900' : 'bg-rose-100 border-rose-300 text-rose-800'
+                }`}>
                   {previewAI.confidence}% Confidence
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 bg-white/80 p-3 rounded-xl border border-gray-200/80">
-                <div>
-                  <span className="text-gray-500 block text-[11px]">Farmer Declared:</span>
-                  <span className="font-bold text-gray-900 text-sm">{declaredGrade}</span>
+              {!previewAI.isCropMatch ? (
+                <div className="p-3 bg-white rounded-xl border border-rose-200 space-y-1">
+                  <p className="font-bold text-rose-900 text-sm">
+                    Selected Crop: <span className="underline">{cropName || 'Produce'}</span>
+                  </p>
+                  <p className="text-rose-700 font-medium">
+                    AI Detected: <strong>{previewAI.detectedCrop}</strong>
+                  </p>
+                  <p className="text-rose-800 text-[11px] pt-1">
+                    Please upload a clear photograph of your actual {cropName || 'crop'} produce before listing.
+                  </p>
                 </div>
-                <div>
-                  <span className="text-gray-500 block text-[11px]">AI Estimated Grade:</span>
-                  <span className="font-black text-agri-700 text-sm">{previewAI.estimatedGrade}</span>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 bg-white/80 p-3 rounded-xl border border-gray-200/80">
+                  <div>
+                    <span className="text-gray-500 block text-[11px]">Farmer Declared:</span>
+                    <span className="font-bold text-gray-900 text-sm">{declaredGrade}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500 block text-[11px]">AI Estimated Grade:</span>
+                    <span className="font-black text-agri-700 text-sm">{previewAI.estimatedGrade}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500 block text-[11px]">Image Consistency:</span>
+                    <span className={`font-bold text-sm ${previewAI.consistency < 75 ? 'text-amber-700' : 'text-emerald-700'}`}>
+                      {previewAI.consistency}%
+                    </span>
+                  </div>
                 </div>
-                <div>
-                  <span className="text-gray-500 block text-[11px]">Image Consistency:</span>
-                  <span className={`font-bold text-sm ${previewAI.consistency < 75 ? 'text-amber-700' : 'text-emerald-700'}`}>
-                    {previewAI.consistency}%
-                  </span>
-                </div>
-              </div>
+              )}
 
               {/* Observations */}
               <div className="space-y-1 font-medium">
                 {previewAI.observations.map((obs, i) => (
                   <p key={i} className="flex items-center gap-1.5 text-[11px]">
-                    <span className="w-1.5 h-1.5 rounded-full bg-agri-600 shrink-0"></span> {obs}
+                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${previewAI.isCropMatch ? 'bg-agri-600' : 'bg-rose-600'}`}></span> {obs}
                   </p>
                 ))}
+              </div>
+
+              {/* Quantity Weight Disclaimer */}
+              <div className="p-2.5 bg-white/90 rounded-xl border border-gray-200 space-y-0.5">
+                <span className="font-bold text-gray-900 block text-[11px]">
+                  ✓ Quantity: {quantity} {unit} (Farmer entered measurement)
+                </span>
+                <span className="text-amber-800 block text-[10px]">
+                  ⚠️ Quantity is based on your entered weighing measurement and cannot be verified from a photograph.
+                </span>
               </div>
 
               <div className="text-[10px] text-gray-500 italic pt-1 border-t border-gray-200/60 flex items-start gap-1">

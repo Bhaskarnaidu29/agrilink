@@ -18,8 +18,8 @@ export const PriceDiscoveryPage: React.FC = () => {
 
   const [crops, setCrops] = useState<Crop[]>([]);
   const [selectedCropId, setSelectedCropId] = useState<string>('');
-  const [quantityKg, setQuantityKg] = useState<number>(500);
-  const [qualityGrade, setQualityGrade] = useState<string>('Grade A');
+  const [quantityKg, setQuantityKg] = useState<string>('');
+  const [qualityGrade, setQualityGrade] = useState<string>('');
 
   // Location State
   const [locationData, setLocationData] = useState<LocationResult | null>(null);
@@ -34,9 +34,6 @@ export const PriceDiscoveryPage: React.FC = () => {
       try {
         const res = await api.get('/crops');
         setCrops(res.data.crops);
-        if (res.data.crops.length > 0) {
-          setSelectedCropId(res.data.crops[0].id);
-        }
       } catch (err) {
         console.error('Failed to load crops', err);
       }
@@ -60,7 +57,7 @@ export const PriceDiscoveryPage: React.FC = () => {
 
   const handleRunDiscovery = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!selectedCropId) return;
+    if (!selectedCropId || !quantityKg || Number(quantityKg) <= 0 || !qualityGrade) return;
     if (!locationData) {
       alert('Please search or detect your location to find nearby buyers.');
       return;
@@ -88,12 +85,6 @@ export const PriceDiscoveryPage: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    if (selectedCropId && locationData) {
-      handleRunDiscovery();
-    }
-  }, [selectedCropId, locationData?.latitude, locationData?.longitude]);
-
   const best = result?.bestOpportunity;
 
   return (
@@ -120,9 +111,13 @@ export const PriceDiscoveryPage: React.FC = () => {
                 <label className="block text-xs font-bold uppercase text-gray-700 mb-1">Select Crop</label>
                 <select
                   value={selectedCropId}
-                  onChange={(e) => setSelectedCropId(e.target.value)}
+                  onChange={(e) => {
+                    setSelectedCropId(e.target.value);
+                    setResult(null);
+                  }}
                   className="w-full px-3 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm font-bold focus:bg-white focus:ring-2 focus:ring-agri-500 focus:outline-none"
                 >
+                  <option value="">[ Select a crop ]</option>
                   {crops.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.name} ({c.category})
@@ -136,8 +131,12 @@ export const PriceDiscoveryPage: React.FC = () => {
                 <input
                   type="number"
                   min="1"
+                  placeholder="Enter quantity"
                   value={quantityKg}
-                  onChange={(e) => setQuantityKg(Number(e.target.value))}
+                  onChange={(e) => {
+                    setQuantityKg(e.target.value);
+                    setResult(null);
+                  }}
                   className="w-full px-3 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm font-bold focus:bg-white focus:ring-2 focus:ring-agri-500 focus:outline-none"
                 />
               </div>
@@ -146,9 +145,13 @@ export const PriceDiscoveryPage: React.FC = () => {
                 <label className="block text-xs font-bold uppercase text-gray-700 mb-1">Quality Grade</label>
                 <select
                   value={qualityGrade}
-                  onChange={(e) => setQualityGrade(e.target.value)}
+                  onChange={(e) => {
+                    setQualityGrade(e.target.value);
+                    setResult(null);
+                  }}
                   className="w-full px-3 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm font-semibold focus:bg-white focus:ring-2 focus:ring-agri-500 focus:outline-none"
                 >
+                  <option value="">[ Select quality grade ]</option>
                   <option value="Grade A">Grade A (Premium)</option>
                   <option value="Grade B">Grade B (Standard)</option>
                   <option value="Grade C">Grade C (Fair)</option>
@@ -166,12 +169,21 @@ export const PriceDiscoveryPage: React.FC = () => {
                     latitude: locationData.latitude,
                     longitude: locationData.longitude,
                   } : undefined}
-                  onChange={(loc) => setLocationData(loc)}
+                  onChange={(loc) => {
+                    setLocationData(loc);
+                  }}
                 />
               </div>
 
               <div>
-                <Button type="submit" variant="primary" size="md" className="w-full py-2.5 text-sm font-bold bg-agri-600 hover:bg-agri-700" isLoading={loading}>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="md"
+                  disabled={!selectedCropId || !quantityKg || Number(quantityKg) <= 0 || !qualityGrade || !locationData || loading}
+                  className="w-full py-2.5 text-sm font-bold bg-agri-600 hover:bg-agri-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  isLoading={loading}
+                >
                   <Search className="w-4 h-4 mr-1.5" /> Find Buyers & Prices
                 </Button>
               </div>
@@ -180,7 +192,15 @@ export const PriceDiscoveryPage: React.FC = () => {
         </Card>
 
         {/* RESULTS SECTION */}
-        {result && (
+        {!result ? (
+          <Card className="text-center py-12 p-8 border-gray-200 shadow-xs">
+            <Search className="w-12 h-12 text-agri-500 mx-auto mb-3" />
+            <h3 className="text-lg font-bold text-gray-900">Select your crop to discover nearby buyers and market prices</h3>
+            <p className="text-sm text-gray-500 max-w-md mx-auto mt-1">
+              Select your crop, enter your quantity, choose quality grade, and set your farm location above to discover nearby buyers and APMC market prices.
+            </p>
+          </Card>
+        ) : (
           <div className="space-y-8 animate-fade-in">
             {/* 🏆 BEST CHOICE BANNER */}
             {best && (
