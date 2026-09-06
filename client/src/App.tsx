@@ -1,8 +1,10 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { Navbar } from './components/common/Navbar';
 import { Footer } from './components/common/Footer';
+import { MobileBottomNav } from './components/common/MobileBottomNav';
+import { ProtectedRoute } from './components/common/ProtectedRoute';
 
 // Pages
 import { LandingPage } from './pages/LandingPage';
@@ -29,35 +31,115 @@ export const App: React.FC = () => {
       <Router>
         <div className="flex flex-col min-h-screen">
           <Navbar />
-          <main className="flex-1">
+          <main className="flex-1 pb-16 md:pb-0">
             <Routes>
+              {/* Public Routes */}
               <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
-
-              {/* Price Discovery & Market Intelligence */}
-              <Route path="/price-discovery" element={<PriceDiscoveryPage />} />
               <Route path="/price-history" element={<PriceHistoryPage />} />
 
               {/* Farmer Journey */}
-              <Route path="/farmer/dashboard" element={<FarmerDashboard />} />
-              <Route path="/farmer/add-produce" element={<AddProducePage />} />
+              <Route
+                path="/farmer/dashboard"
+                element={
+                  <ProtectedRoute allowedRoles={['FARMER']}>
+                    <FarmerDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/farmer/add-produce"
+                element={
+                  <ProtectedRoute allowedRoles={['FARMER']}>
+                    <AddProducePage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/price-discovery"
+                element={
+                  <ProtectedRoute allowedRoles={['FARMER', 'ADMIN']}>
+                    <PriceDiscoveryPage />
+                  </ProtectedRoute>
+                }
+              />
 
               {/* Buyer Journey */}
-              <Route path="/buyer/dashboard" element={<BuyerDashboard />} />
-              <Route path="/buyer/post-requirement" element={<PostRequirementPage />} />
-              <Route path="/buyer/matching" element={<MatchingFarmersPage />} />
+              <Route
+                path="/buyer/dashboard"
+                element={
+                  <ProtectedRoute allowedRoles={['BUYER']}>
+                    <BuyerDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/buyer/post-requirement"
+                element={
+                  <ProtectedRoute allowedRoles={['BUYER']}>
+                    <PostRequirementPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/buyer/matching"
+                element={
+                  <ProtectedRoute allowedRoles={['BUYER', 'ADMIN']}>
+                    <MatchingFarmersPage />
+                  </ProtectedRoute>
+                }
+              />
 
-              {/* Marketplaces */}
-              <Route path="/marketplace/produce" element={<PriceDiscoveryPage />} />
-              <Route path="/marketplace/buyers" element={<PostRequirementPage />} />
+              {/* Aliased Marketplace Routes */}
+              <Route
+                path="/marketplace/produce"
+                element={
+                  <ProtectedRoute allowedRoles={['BUYER', 'ADMIN']}>
+                    <MatchingFarmersPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/marketplace/buyers"
+                element={
+                  <ProtectedRoute allowedRoles={['FARMER', 'ADMIN']}>
+                    <PriceDiscoveryPage />
+                  </ProtectedRoute>
+                }
+              />
 
-              {/* Offers, Deals & Admin */}
-              <Route path="/offers" element={<OffersPage />} />
-              <Route path="/deals" element={<DealsPage />} />
-              <Route path="/admin" element={<AdminDashboard />} />
+              {/* Shared Protected Routes */}
+              <Route
+                path="/offers"
+                element={
+                  <ProtectedRoute>
+                    <OffersPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/deals"
+                element={
+                  <ProtectedRoute>
+                    <DealsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute allowedRoles={['ADMIN']}>
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Fallback */}
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>
+          <MobileBottomNav />
           <Footer />
         </div>
       </Router>

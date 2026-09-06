@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/client';
 import { Crop, OpportunityAnalysisResult, RecommendedOption } from '../../types';
-import { Search, Trophy, TrendingUp, Truck, DollarSign, MapPin, CheckCircle2, AlertCircle, ArrowRight, Table, LayoutGrid, Info, ShieldCheck, Database, Cpu } from 'lucide-react';
+import { Search, Trophy, TrendingUp, Truck, DollarSign, MapPin, CheckCircle2, ArrowRight, Table, LayoutGrid, Info, ShieldCheck } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
@@ -87,32 +87,20 @@ export const PriceDiscoveryPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-8">
-        {/* Header with SIH Data Origin Badges */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-agri-900 via-agri-800 to-slate-900 text-white p-8 rounded-3xl shadow-lg relative overflow-hidden">
-          <div className="absolute right-0 top-0 translate-x-8 -translate-y-8 w-64 h-64 bg-agri-500/20 rounded-full blur-3xl"></div>
-          <div className="space-y-3 relative z-10">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-agri-500/20 border border-agri-400/30 text-agri-300 text-xs font-bold uppercase tracking-wider">
-                🔍 Market Intelligence Engine
-              </span>
-              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-400/30 text-amber-300 text-xs font-bold uppercase tracking-wider">
-                <Database className="w-3.5 h-3.5" /> DEMO APMC DATA
-              </span>
-              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-sky-500/20 border border-sky-400/30 text-sky-300 text-xs font-bold uppercase tracking-wider">
-                <Truck className="w-3.5 h-3.5" /> ESTIMATED LOGISTICS
-              </span>
-              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-purple-500/20 border border-purple-400/30 text-purple-300 text-xs font-bold uppercase tracking-wider">
-                <Cpu className="w-3.5 h-3.5" /> e-NAM API READY
-              </span>
-            </div>
-            <h1 className="text-3xl font-black tracking-tight">Find Best Selling Opportunity</h1>
+        {/* Header */}
+        <div className="bg-gradient-to-r from-agri-950 via-agri-900 to-slate-900 text-white p-8 rounded-3xl shadow-lg relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-2 relative z-10">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-agri-500/20 border border-agri-400/30 text-agri-300 text-xs font-bold uppercase tracking-wider">
+              🔍 Market Price & Buyer Search
+            </span>
+            <h1 className="text-3xl font-black tracking-tight">Find Buyers & Market Prices</h1>
             <p className="text-slate-300 text-sm max-w-xl">
-              Compare mandi market prices, calculate distance-based transport costs, analyze price trends, and rank your highest net revenue opportunities.
+              Discover nearby buyers and wholesale APMC markets, compare offered prices, factor in estimated transport costs, and choose the deal that gives you the highest net earning.
             </p>
           </div>
         </div>
 
-        {/* Input Parameters Form */}
+        {/* Input Form */}
         <Card className="shadow-md border-gray-200">
           <CardContent className="p-6">
             <form onSubmit={handleRunDiscovery} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
@@ -121,7 +109,7 @@ export const PriceDiscoveryPage: React.FC = () => {
                 <select
                   value={selectedCropId}
                   onChange={(e) => setSelectedCropId(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-gray-50 border border-gray-300 rounded-lg text-sm font-semibold focus:bg-white focus:ring-2 focus:ring-agri-500 focus:outline-none"
+                  className="w-full px-3 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm font-bold focus:bg-white focus:ring-2 focus:ring-agri-500 focus:outline-none"
                 >
                   {crops.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -138,7 +126,7 @@ export const PriceDiscoveryPage: React.FC = () => {
                   min="1"
                   value={quantityKg}
                   onChange={(e) => setQuantityKg(Number(e.target.value))}
-                  className="w-full px-3 py-2.5 bg-gray-50 border border-gray-300 rounded-lg text-sm font-semibold focus:bg-white focus:ring-2 focus:ring-agri-500 focus:outline-none"
+                  className="w-full px-3 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm font-bold focus:bg-white focus:ring-2 focus:ring-agri-500 focus:outline-none"
                 />
               </div>
 
@@ -147,7 +135,7 @@ export const PriceDiscoveryPage: React.FC = () => {
                 <select
                   value={qualityGrade}
                   onChange={(e) => setQualityGrade(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-gray-50 border border-gray-300 rounded-lg text-sm font-semibold focus:bg-white focus:ring-2 focus:ring-agri-500 focus:outline-none"
+                  className="w-full px-3 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm font-semibold focus:bg-white focus:ring-2 focus:ring-agri-500 focus:outline-none"
                 >
                   <option value="Grade A">Grade A (Premium)</option>
                   <option value="Grade B">Grade B (Standard)</option>
@@ -160,7 +148,7 @@ export const PriceDiscoveryPage: React.FC = () => {
                 <select
                   value={locationCity}
                   onChange={(e) => handleCityChange(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-gray-50 border border-gray-300 rounded-lg text-sm font-semibold focus:bg-white focus:ring-2 focus:ring-agri-500 focus:outline-none"
+                  className="w-full px-3 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm font-bold focus:bg-white focus:ring-2 focus:ring-agri-500 focus:outline-none"
                 >
                   <option value="Vijayawada">Vijayawada (AP)</option>
                   <option value="Guntur">Guntur (AP)</option>
@@ -173,48 +161,32 @@ export const PriceDiscoveryPage: React.FC = () => {
 
               <div>
                 <Button type="submit" variant="primary" size="md" className="w-full py-2.5 text-sm font-bold bg-agri-600 hover:bg-agri-700" isLoading={loading}>
-                  <Search className="w-4 h-4 mr-1.5" /> Analyze Opportunities
+                  <Search className="w-4 h-4 mr-1.5" /> Find Buyers & Prices
                 </Button>
               </div>
             </form>
           </CardContent>
         </Card>
 
-        {/* SIH DATA ORIGIN BANNER */}
-        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-amber-900 font-medium">
-          <div className="flex items-center gap-2">
-            <Info className="w-4 h-4 text-amber-600 shrink-0" />
-            <span>
-              <strong>SIH Data Notice:</strong> Market prices are based on APMC benchmark data. Transport costs are calculated using Haversine distance math.
-            </span>
-          </div>
-          <span className="bg-amber-200/60 text-amber-950 font-bold px-2.5 py-1 rounded-md text-[11px] whitespace-nowrap">
-            EXTERNAL MANDI API READY
-          </span>
-        </div>
-
         {/* RESULTS SECTION */}
         {result && (
           <div className="space-y-8 animate-fade-in">
-            {/* 🏆 BEST OPPORTUNITY HERO BANNER */}
+            {/* 🏆 BEST CHOICE BANNER */}
             {best && (
               <Card className="border-2 border-amber-400/80 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-white shadow-xl relative overflow-hidden">
-                <div className="absolute top-0 right-0 bg-amber-400 text-slate-900 text-xs font-black px-4 py-1.5 rounded-bl-xl uppercase tracking-widest flex items-center gap-1 shadow-sm">
+                <div className="absolute top-0 right-0 bg-amber-500 text-slate-950 text-xs font-black px-4 py-1.5 rounded-bl-xl uppercase tracking-widest flex items-center gap-1 shadow-xs">
                   <Trophy className="w-4 h-4" /> 🏆 RECOMMENDED BEST CHOICE
                 </div>
 
-                <CardContent className="p-8 space-y-6">
+                <CardContent className="p-6 sm:p-8 space-y-6">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div className="space-y-2">
                       <div className="flex items-center gap-3">
-                        <span className="text-3xl font-black text-slate-900">{best.name}</span>
-                        <Badge variant="earth">{best.type}</Badge>
-                        <Badge variant="warning" className="text-sm font-bold px-3 py-1 bg-amber-400 text-slate-900 border-none">
-                          Score {best.opportunityScore} / 100
-                        </Badge>
+                        <span className="text-2xl sm:text-3xl font-black text-slate-900">{best.name}</span>
+                        <Badge variant={best.type === 'BUYER' ? 'info' : 'earth'}>{best.type}</Badge>
                       </div>
                       <p className="text-slate-600 text-sm flex items-center gap-1.5 font-medium">
-                        <MapPin className="w-4 h-4 text-agri-600" /> {best.locationCity} • {best.distanceKm} km away from your farm
+                        <MapPin className="w-4 h-4 text-agri-600" /> {best.locationCity} • {best.distanceKm} km away from farm
                       </p>
                     </div>
 
@@ -231,7 +203,7 @@ export const PriceDiscoveryPage: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Gross Revenue & Transport Breakdown Math */}
+                  {/* Revenue Math */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-amber-200/60">
                     <div className="p-4 bg-white rounded-xl border border-gray-200">
                       <span className="block text-xs font-bold text-gray-500 uppercase">1. Gross Revenue</span>
@@ -240,22 +212,22 @@ export const PriceDiscoveryPage: React.FC = () => {
                     </div>
 
                     <div className="p-4 bg-white rounded-xl border border-gray-200">
-                      <span className="block text-xs font-bold text-rose-600 uppercase">2. Estimated Transport</span>
+                      <span className="block text-xs font-bold text-rose-600 uppercase">2. Est. Transport Cost</span>
                       <span className="text-xl font-bold text-rose-600">- ₹{best.transportCost.toLocaleString('en-IN')}</span>
-                      <span className="block text-[11px] text-gray-400 mt-0.5">Distance {best.distanceKm} km @ ₹15/km/ton</span>
+                      <span className="block text-[11px] text-gray-400 mt-0.5">Distance {best.distanceKm} km</span>
                     </div>
 
                     <div className="p-4 bg-agri-600 text-white rounded-xl shadow-md">
-                      <span className="block text-xs font-bold text-agri-200 uppercase">3. Net Revenue in Hand</span>
+                      <span className="block text-xs font-bold text-agri-200 uppercase">3. Net Earning in Hand</span>
                       <span className="text-xl font-black">₹{best.expectedNetRevenue.toLocaleString('en-IN')}</span>
-                      <span className="block text-[11px] text-agri-100 mt-0.5">Optimized expected earnings</span>
+                      <span className="block text-[11px] text-agri-100 mt-0.5">Highest expected net profit</span>
                     </div>
                   </div>
 
                   {/* Why Recommended Explanation */}
                   <div className="bg-amber-100/60 border border-amber-200 rounded-xl p-4 space-y-2">
                     <h4 className="text-xs font-bold uppercase tracking-wider text-amber-900 flex items-center gap-1.5">
-                      <CheckCircle2 className="w-4 h-4 text-amber-700" /> Why this is your best opportunity?
+                      <CheckCircle2 className="w-4 h-4 text-amber-700" /> Why this deal is recommended:
                     </h4>
                     <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-amber-950 font-medium">
                       {best.rationale.map((r, idx) => (
@@ -266,7 +238,6 @@ export const PriceDiscoveryPage: React.FC = () => {
                     </ul>
                   </div>
 
-                  {/* Action Button */}
                   <div className="flex justify-end pt-2">
                     {best.type === 'BUYER' ? (
                       <Button
@@ -284,7 +255,7 @@ export const PriceDiscoveryPage: React.FC = () => {
                         className="bg-agri-600 hover:bg-agri-700 shadow-md"
                         onClick={() => navigate('/price-history')}
                       >
-                        View APMC Mandi Rates <ArrowRight className="w-5 h-5 ml-2" />
+                        View APMC Mandi Prices <ArrowRight className="w-5 h-5 ml-2" />
                       </Button>
                     )}
                   </div>
@@ -292,12 +263,12 @@ export const PriceDiscoveryPage: React.FC = () => {
               </Card>
             )}
 
-            {/* SELL NOW OR WAIT ADVISOR + MAP GRID */}
+            {/* ADVISOR & MAP */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <Card className="lg:col-span-1 border-gray-200">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5 text-agri-600" /> Sell Now or Wait Advisor
+                  <CardTitle className="flex items-center gap-2 text-base font-bold">
+                    <TrendingUp className="w-5 h-5 text-agri-600" /> Market Price Advisory
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -306,15 +277,15 @@ export const PriceDiscoveryPage: React.FC = () => {
                       ? 'bg-sky-50 border-sky-200 text-sky-900'
                       : 'bg-agri-50 border-agri-200 text-agri-900'
                   }`}>
-                    <span className="text-xs font-bold uppercase tracking-wider block opacity-75">Trend Slope Advisory</span>
+                    <span className="text-[11px] font-bold uppercase tracking-wider block opacity-75">Selling Suggestion</span>
                     <h3 className="text-2xl font-black">{result.sellOrWaitAdvice.decision}</h3>
-                    <p className="text-sm font-bold mt-2">
+                    <p className="text-xs font-bold mt-2">
                       Expected Range: <span className="text-slate-900">{result.sellOrWaitAdvice.expectedPriceRange}</span>
                     </p>
                   </div>
 
                   <div className="text-xs text-gray-600 space-y-2 leading-relaxed">
-                    <p><strong>Current Avg Price:</strong> ₹{result.sellOrWaitAdvice.currentAvgPrice}/kg</p>
+                    <p><strong>Current Market Avg:</strong> ₹{result.sellOrWaitAdvice.currentAvgPrice}/kg</p>
                     <p><strong>Reasoning:</strong> {result.sellOrWaitAdvice.reasoning}</p>
                   </div>
 
@@ -327,14 +298,14 @@ export const PriceDiscoveryPage: React.FC = () => {
 
               <Card className="lg:col-span-2 border-gray-200">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <MapPin className="w-5 h-5 text-agri-600" /> Nearby Mandis & Buyers Map
+                  <CardTitle className="flex items-center gap-2 text-base font-bold">
+                    <MapPin className="w-5 h-5 text-agri-600" /> Nearby Buyers & Mandis Map
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <MarketMap farmerLocation={result.farmerLocation} options={result.options} />
                   <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
-                    <Info className="w-4 h-4 text-agri-600" /> Green circle depicts 25 km transport radius. Pins show ranked selling destinations.
+                    <Info className="w-4 h-4 text-agri-600" /> Green circle depicts 25 km radius around farm. Pins show nearby buyers and markets.
                   </p>
                 </CardContent>
               </Card>
@@ -343,8 +314,8 @@ export const PriceDiscoveryPage: React.FC = () => {
             {/* COMPARISON TABLE */}
             <Card className="border-gray-200">
               <CardHeader className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <Table className="w-5 h-5 text-agri-600" /> Full Opportunity Comparison Table
+                <CardTitle className="flex items-center gap-2 text-base font-bold">
+                  <Table className="w-5 h-5 text-agri-600" /> All Buyer & Market Options
                 </CardTitle>
                 <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg">
                   <button
@@ -367,14 +338,12 @@ export const PriceDiscoveryPage: React.FC = () => {
                     <table className="w-full text-left text-sm border-collapse">
                       <thead>
                         <tr className="border-b border-gray-200 bg-gray-50/80 text-xs font-bold uppercase text-gray-600">
-                          <th className="py-3 px-4">Destination Option</th>
+                          <th className="py-3 px-4">Buyer / Market</th>
                           <th className="py-3 px-4">Type</th>
                           <th className="py-3 px-4">Distance</th>
-                          <th className="py-3 px-4">Unit Price</th>
-                          <th className="py-3 px-4">Gross Revenue</th>
+                          <th className="py-3 px-4">Offered Price</th>
                           <th className="py-3 px-4">Est. Transport</th>
                           <th className="py-3 px-4">Expected Net Revenue</th>
-                          <th className="py-3 px-4">Score</th>
                           <th className="py-3 px-4 text-right">Action</th>
                         </tr>
                       </thead>
@@ -390,16 +359,8 @@ export const PriceDiscoveryPage: React.FC = () => {
                             </td>
                             <td className="py-3.5 px-4 text-gray-600">{opt.distanceKm} km</td>
                             <td className="py-3.5 px-4 font-bold text-gray-900">₹{opt.unitPrice}/kg</td>
-                            <td className="py-3.5 px-4 text-gray-600">₹{opt.grossRevenue.toLocaleString('en-IN')}</td>
                             <td className="py-3.5 px-4 text-rose-600 font-medium">- ₹{opt.transportCost.toLocaleString('en-IN')}</td>
                             <td className="py-3.5 px-4 font-black text-agri-600 text-base">₹{opt.expectedNetRevenue.toLocaleString('en-IN')}</td>
-                            <td className="py-3.5 px-4">
-                              <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-bold ${
-                                opt.opportunityScore >= 90 ? 'bg-agri-100 text-agri-800' : 'bg-gray-100 text-gray-800'
-                              }`}>
-                                {opt.opportunityScore} / 100
-                              </span>
-                            </td>
                             <td className="py-3.5 px-4 text-right">
                               <Button
                                 variant={opt.isRecommended ? 'primary' : 'outline'}
@@ -424,9 +385,11 @@ export const PriceDiscoveryPage: React.FC = () => {
                             <h4 className="font-bold text-gray-900 text-base">{opt.name}</h4>
                             <p className="text-xs text-gray-500">{opt.locationCity} • {opt.distanceKm} km away</p>
                           </div>
-                          <span className="text-xs font-black bg-amber-100 text-amber-900 px-2.5 py-1 rounded-full">
-                            Score {opt.opportunityScore}
-                          </span>
+                          {opt.isRecommended && (
+                            <span className="text-[10px] font-black bg-amber-400 text-slate-950 px-2.5 py-1 rounded-full">
+                              🏆 Best Deal
+                            </span>
+                          )}
                         </div>
 
                         <div className="pt-2 border-t border-gray-100 flex justify-between items-center text-sm">

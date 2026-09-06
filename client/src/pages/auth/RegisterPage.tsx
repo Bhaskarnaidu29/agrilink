@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api/client';
-import { Sprout } from 'lucide-react';
+import { Sprout, UserCheck, Store, ArrowRight, Check } from 'lucide-react';
 import { UserRole } from '../../types';
 import { Button } from '../../components/ui/Button';
 import { Card, CardContent } from '../../components/ui/Card';
@@ -10,19 +10,30 @@ import { Card, CardContent } from '../../components/ui/Card';
 export const RegisterPage: React.FC = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
-  const [role, setRole] = useState<UserRole>('FARMER');
+  const initialRoleParam = searchParams.get('role');
+  const [role, setRole] = useState<UserRole>(
+    initialRoleParam === 'BUYER' ? 'BUYER' : 'FARMER'
+  );
+
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [city, setCity] = useState('Vijayawada');
+  const [state, setState] = useState('Andhra Pradesh');
   const [farmName, setFarmName] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [businessType, setBusinessType] = useState('Wholesaler');
 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (initialRoleParam === 'BUYER') setRole('BUYER');
+    else if (initialRoleParam === 'FARMER') setRole('FARMER');
+  }, [initialRoleParam]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,9 +48,9 @@ export const RegisterPage: React.FC = () => {
         password,
         role,
         city,
-        state: 'Andhra Pradesh',
-        ...(role === 'FARMER' && { farmName }),
-        ...(role === 'BUYER' && { companyName, businessType }),
+        state,
+        ...(role === 'FARMER' && { farmName: farmName || `${name}'s Farm` }),
+        ...(role === 'BUYER' && { companyName: companyName || `${name} Traders`, businessType }),
       };
 
       const response = await api.post('/auth/register', payload);
@@ -51,7 +62,7 @@ export const RegisterPage: React.FC = () => {
         navigate('/buyer/dashboard');
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Registration failed');
+      setError(err.response?.data?.message || 'Registration failed. Please check details.');
     } finally {
       setLoading(false);
     }
@@ -62,51 +73,51 @@ export const RegisterPage: React.FC = () => {
       <div className="w-full max-w-lg space-y-6">
         <div className="text-center space-y-2">
           <Link to="/" className="inline-flex items-center gap-2 text-agri-600 font-black text-2xl">
-            <Sprout className="w-7 h-7" /> AGRI<span className="text-gray-900">LINK</span>
+            <Sprout className="w-7 h-7 text-agri-600" /> AGRI<span className="text-gray-900">LINK</span>
           </Link>
-          <h2 className="text-2xl font-bold text-gray-900">Create Your Account</h2>
-          <p className="text-sm text-gray-500">Join India's Agri Market Linkage Platform</p>
+          <h2 className="text-2xl font-black text-gray-900">Create Your AgriLink Account</h2>
+          <p className="text-sm text-gray-500">Join farmers, wholesalers, and traders in local agricultural commerce</p>
         </div>
 
         <Card className="shadow-lg border-gray-200">
-          <CardContent className="p-8 space-y-6">
-            {/* Role Toggle Selector */}
+          <CardContent className="p-6 sm:p-8 space-y-6">
+            {/* Step 1: Role Selection */}
             <div className="space-y-2">
-              <label className="block text-xs font-bold uppercase text-gray-700">Select Role</label>
-              <div className="grid grid-cols-2 gap-2">
+              <label className="block text-xs font-bold uppercase text-gray-700">What is your primary goal?</label>
+              <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
                   onClick={() => setRole('FARMER')}
-                  className={`p-3 rounded-xl font-bold text-sm border flex items-center justify-center gap-2 transition ${
+                  className={`p-3.5 rounded-2xl font-bold text-sm border flex items-center justify-center gap-2 transition ${
                     role === 'FARMER'
-                      ? 'bg-agri-600 text-white border-agri-600 shadow-sm'
+                      ? 'bg-agri-600 text-white border-agri-600 shadow-md ring-2 ring-agri-500/30'
                       : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                   }`}
                 >
-                  👨‍🌾 Farmer
+                  👨‍🌾 Sell Produce (Farmer)
                 </button>
                 <button
                   type="button"
                   onClick={() => setRole('BUYER')}
-                  className={`p-3 rounded-xl font-bold text-sm border flex items-center justify-center gap-2 transition ${
+                  className={`p-3.5 rounded-2xl font-bold text-sm border flex items-center justify-center gap-2 transition ${
                     role === 'BUYER'
-                      ? 'bg-sky-600 text-white border-sky-600 shadow-sm'
+                      ? 'bg-sky-600 text-white border-sky-600 shadow-md ring-2 ring-sky-500/30'
                       : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                   }`}
                 >
-                  🏪 Buyer / Trader
+                  🏪 Buy Produce (Buyer)
                 </button>
               </div>
             </div>
 
             {error && (
-              <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-sm font-medium">
+              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm font-medium">
                 {error}
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold uppercase text-gray-700 mb-1">Full Name</label>
                   <input
@@ -115,7 +126,7 @@ export const RegisterPage: React.FC = () => {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="e.g. Ramesh Kumar"
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm focus:bg-white focus:ring-2 focus:ring-agri-500 focus:outline-none"
+                    className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-agri-500 focus:outline-none"
                   />
                 </div>
                 <div>
@@ -125,8 +136,8 @@ export const RegisterPage: React.FC = () => {
                     required
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    placeholder="+91 9848012345"
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm focus:bg-white focus:ring-2 focus:ring-agri-500 focus:outline-none"
+                    placeholder="e.g. 9848012345"
+                    className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-agri-500 focus:outline-none"
                   />
                 </div>
               </div>
@@ -139,7 +150,7 @@ export const RegisterPage: React.FC = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="ramesh@gmail.com"
-                  className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm focus:bg-white focus:ring-2 focus:ring-agri-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-agri-500 focus:outline-none"
                 />
               </div>
 
@@ -151,70 +162,92 @@ export const RegisterPage: React.FC = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Minimum 6 characters"
-                  className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm focus:bg-white focus:ring-2 focus:ring-agri-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-agri-500 focus:outline-none"
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-bold uppercase text-gray-700 mb-1">City / Location</label>
-                <select
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm focus:bg-white focus:ring-2 focus:ring-agri-500 focus:outline-none"
-                >
-                  <option value="Vijayawada">Vijayawada</option>
-                  <option value="Guntur">Guntur</option>
-                  <option value="Eluru">Eluru</option>
-                  <option value="Hyderabad">Hyderabad</option>
-                  <option value="Kolar">Kolar</option>
-                  <option value="Delhi">Delhi</option>
-                </select>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold uppercase text-gray-700 mb-1">City / Mandal</label>
+                  <input
+                    type="text"
+                    required
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    placeholder="e.g. Vijayawada"
+                    className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-agri-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold uppercase text-gray-700 mb-1">State</label>
+                  <input
+                    type="text"
+                    required
+                    value={state}
+                    onChange={(e) => setState(e.target.value)}
+                    placeholder="e.g. Andhra Pradesh"
+                    className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-agri-500 focus:outline-none"
+                  />
+                </div>
               </div>
 
+              {/* FARMER SPECIFIC */}
               {role === 'FARMER' && (
                 <div>
-                  <label className="block text-xs font-bold uppercase text-gray-700 mb-1">Farm Name</label>
+                  <label className="block text-xs font-bold uppercase text-gray-700 mb-1">Farm / Village Name</label>
                   <input
                     type="text"
                     value={farmName}
                     onChange={(e) => setFarmName(e.target.value)}
-                    placeholder="e.g. Green Valley Farm"
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm focus:bg-white focus:ring-2 focus:ring-agri-500 focus:outline-none"
+                    placeholder="e.g. Sri Venkateswara Organic Farm"
+                    className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-agri-500 focus:outline-none"
                   />
                 </div>
               )}
 
+              {/* BUYER SPECIFIC */}
               {role === 'BUYER' && (
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold uppercase text-gray-700 mb-1">Company / Shop Name</label>
                     <input
                       type="text"
                       value={companyName}
                       onChange={(e) => setCompanyName(e.target.value)}
-                      placeholder="e.g. Fresh Mandi Ltd"
-                      className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm focus:bg-white focus:ring-2 focus:ring-agri-500 focus:outline-none"
+                      placeholder="e.g. Fresh Mandi Traders"
+                      className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-sky-500 focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold uppercase text-gray-700 mb-1">Business Type</label>
+                    <label className="block text-xs font-bold uppercase text-gray-700 mb-1">Buyer Type</label>
                     <select
                       value={businessType}
                       onChange={(e) => setBusinessType(e.target.value)}
-                      className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm focus:bg-white focus:ring-2 focus:ring-agri-500 focus:outline-none"
+                      className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm font-medium focus:bg-white focus:ring-2 focus:ring-sky-500 focus:outline-none"
                     >
+                      <option value="Local Trader">Local Trader</option>
                       <option value="Wholesaler">Wholesaler</option>
                       <option value="Retailer">Retailer</option>
-                      <option value="Restaurant">Restaurant</option>
-                      <option value="Food Processor">Food Processor</option>
+                      <option value="Supermarket">Supermarket</option>
+                      <option value="Processor">Processor</option>
                       <option value="Exporter">Exporter</option>
+                      <option value="Restaurant / Hotel Supplier">Restaurant / Hotel Supplier</option>
+                      <option value="Cooperative">Cooperative</option>
+                      <option value="Institutional Buyer">Institutional Buyer</option>
+                      <option value="Other Business">Other Business</option>
                     </select>
                   </div>
                 </div>
               )}
 
-              <Button type="submit" variant="primary" size="lg" className="w-full" isLoading={loading}>
-                Create Account
+              <Button
+                type="submit"
+                variant="primary"
+                size="lg"
+                className={`w-full ${role === 'FARMER' ? 'bg-agri-600 hover:bg-agri-700' : 'bg-sky-600 hover:bg-sky-700'}`}
+                isLoading={loading}
+              >
+                Create Account & Continue <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </form>
 
@@ -222,7 +255,7 @@ export const RegisterPage: React.FC = () => {
               <p className="text-xs text-gray-500">
                 Already registered?{' '}
                 <Link to="/login" className="font-bold text-agri-600 hover:text-agri-700">
-                  Log in
+                  Sign in here
                 </Link>
               </p>
             </div>

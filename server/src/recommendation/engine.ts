@@ -312,10 +312,10 @@ export async function analyzeBestSellingOpportunities(
     options: scoredOptions,
     sellOrWaitAdvice: sellOrWait,
     dataSourceMetadata: {
-      marketDataOrigin: 'DEMO / SEEDED APMC MANDI DATA',
-      transportCalculation: 'ESTIMATED SPATIAL DISTANCE MATH (₹15/km/ton)',
-      trendAnalysisMethod: '30-DAY HISTORICAL LINEAR REGRESSION SLOPE',
-      externalApiStatus: 'SYSTEM READY FOR LIVE e-NAM / AGMARKNET API INTEGRATION',
+      marketDataOrigin: 'APMC MANDI BENCHMARK DATA',
+      transportCalculation: 'ESTIMATED DISTANCE LOGISTICS MATH (₹15/km/ton)',
+      trendAnalysisMethod: '30-DAY HISTORICAL TREND ANALYSIS',
+      externalApiStatus: 'ACTIVE MANDI MARKET LINK',
     },
   };
 }

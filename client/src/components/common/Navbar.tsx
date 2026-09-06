@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Sprout, TrendingUp, ShoppingBag, Handshake, ShieldCheck, LogOut, Menu, X, Bell } from 'lucide-react';
+import { Sprout, TrendingUp, Handshake, ShieldCheck, LogOut, Menu, X, PlusCircle, Search, Store } from 'lucide-react';
 import { Button } from '../ui/Button';
 
 export const Navbar: React.FC = () => {
@@ -22,83 +22,152 @@ export const Navbar: React.FC = () => {
               <Sprout className="w-5 h-5" />
             </div>
             <div>
-              <span className="text-xl font-black tracking-tight text-gray-900">AGRI<span className="text-agri-600">LINK</span></span>
-              <span className="block text-[10px] font-semibold text-agri-700 uppercase tracking-widest -mt-1">Price Discovery</span>
+              <span className="text-xl font-black tracking-tight text-gray-900">
+                AGRI<span className="text-agri-600">LINK</span>
+              </span>
+              <span className="block text-[10px] font-semibold text-agri-700 tracking-wider -mt-1">
+                Better Markets. Better Prices.
+              </span>
             </div>
           </Link>
 
           {/* Desktop Nav Items */}
           <nav className="hidden md:flex items-center gap-1">
-            <Link
-              to="/price-discovery"
-              className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-1.5 ${
-                isActive('/price-discovery')
-                  ? 'bg-agri-50 text-agri-700'
-                  : 'text-gray-600 hover:text-agri-600 hover:bg-gray-50'
-              }`}
-            >
-              <TrendingUp className="w-4 h-4 text-agri-600" />
-              Find Best Opportunity
-            </Link>
-
-            <Link
-              to="/price-history"
-              className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition-all ${
-                isActive('/price-history')
-                  ? 'bg-agri-50 text-agri-700'
-                  : 'text-gray-600 hover:text-agri-600 hover:bg-gray-50'
-              }`}
-            >
-              Market Prices & Trends
-            </Link>
-
+            {/* FARMER NAV */}
             {user?.role === 'FARMER' && (
               <>
                 <Link
                   to="/farmer/dashboard"
                   className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition-all ${
-                    isActive('/farmer/dashboard') ? 'bg-agri-50 text-agri-700' : 'text-gray-600 hover:text-agri-600 hover:bg-gray-50'
+                    isActive('/farmer/dashboard')
+                      ? 'bg-agri-50 text-agri-700'
+                      : 'text-gray-600 hover:text-agri-600 hover:bg-gray-50'
                   }`}
                 >
-                  My Dashboard
+                  Home
                 </Link>
                 <Link
-                  to="/marketplace/buyers"
-                  className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition-all ${
-                    isActive('/marketplace/buyers') ? 'bg-agri-50 text-agri-700' : 'text-gray-600 hover:text-agri-600 hover:bg-gray-50'
+                  to="/farmer/add-produce"
+                  className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-1 ${
+                    isActive('/farmer/add-produce')
+                      ? 'bg-agri-50 text-agri-700'
+                      : 'text-gray-600 hover:text-agri-600 hover:bg-gray-50'
                   }`}
                 >
-                  Buyer Requirements
+                  <PlusCircle className="w-4 h-4 text-agri-600" />
+                  Sell Produce
+                </Link>
+                <Link
+                  to="/price-discovery"
+                  className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-1 ${
+                    isActive('/price-discovery')
+                      ? 'bg-agri-50 text-agri-700'
+                      : 'text-gray-600 hover:text-agri-600 hover:bg-gray-50'
+                  }`}
+                >
+                  <Search className="w-4 h-4 text-agri-600" />
+                  Find Buyers
+                </Link>
+                <Link
+                  to="/offers"
+                  className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-1 ${
+                    isActive('/offers')
+                      ? 'bg-agri-50 text-agri-700'
+                      : 'text-gray-600 hover:text-agri-600 hover:bg-gray-50'
+                  }`}
+                >
+                  <Handshake className="w-4 h-4 text-agri-600" />
+                  Offers
+                </Link>
+                <Link
+                  to="/deals"
+                  className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition-all ${
+                    isActive('/deals')
+                      ? 'bg-agri-50 text-agri-700'
+                      : 'text-gray-600 hover:text-agri-600 hover:bg-gray-50'
+                  }`}
+                >
+                  Deals
+                </Link>
+                <Link
+                  to="/price-history"
+                  className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition-all ${
+                    isActive('/price-history')
+                      ? 'bg-agri-50 text-agri-700'
+                      : 'text-gray-600 hover:text-agri-600 hover:bg-gray-50'
+                  }`}
+                >
+                  Markets
                 </Link>
               </>
             )}
 
+            {/* BUYER NAV */}
             {user?.role === 'BUYER' && (
               <>
                 <Link
                   to="/buyer/dashboard"
                   className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition-all ${
-                    isActive('/buyer/dashboard') ? 'bg-agri-50 text-agri-700' : 'text-gray-600 hover:text-agri-600 hover:bg-gray-50'
+                    isActive('/buyer/dashboard')
+                      ? 'bg-sky-50 text-sky-700'
+                      : 'text-gray-600 hover:text-sky-600 hover:bg-gray-50'
                   }`}
                 >
-                  Buyer Dashboard
+                  Home
+                </Link>
+                <Link
+                  to="/buyer/post-requirement"
+                  className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-1 ${
+                    isActive('/buyer/post-requirement')
+                      ? 'bg-sky-50 text-sky-700'
+                      : 'text-gray-600 hover:text-sky-600 hover:bg-gray-50'
+                  }`}
+                >
+                  <Store className="w-4 h-4 text-sky-600" />
+                  Post Requirement
                 </Link>
                 <Link
                   to="/marketplace/produce"
                   className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition-all ${
-                    isActive('/marketplace/produce') ? 'bg-agri-50 text-agri-700' : 'text-gray-600 hover:text-agri-600 hover:bg-gray-50'
+                    isActive('/marketplace/produce')
+                      ? 'bg-sky-50 text-sky-700'
+                      : 'text-gray-600 hover:text-sky-600 hover:bg-gray-50'
                   }`}
                 >
-                  Browse Produce
+                  Find Farmers
+                </Link>
+                <Link
+                  to="/offers"
+                  className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-1 ${
+                    isActive('/offers')
+                      ? 'bg-sky-50 text-sky-700'
+                      : 'text-gray-600 hover:text-sky-600 hover:bg-gray-50'
+                  }`}
+                >
+                  <Handshake className="w-4 h-4 text-sky-600" />
+                  Offers
+                </Link>
+                <Link
+                  to="/deals"
+                  className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition-all ${
+                    isActive('/deals')
+                      ? 'bg-sky-50 text-sky-700'
+                      : 'text-gray-600 hover:text-sky-600 hover:bg-gray-50'
+                  }`}
+                >
+                  Purchases
                 </Link>
               </>
             )}
 
+            {/* ADMIN NAV */}
             {user?.role === 'ADMIN' && (
               <Link
                 to="/admin"
                 className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-1.5 ${
-                  isActive('/admin') ? 'bg-purple-50 text-purple-700' : 'text-gray-600 hover:text-purple-600 hover:bg-gray-50'
+                  isActive('/admin')
+                    ? 'bg-purple-50 text-purple-700'
+                    : 'text-gray-600 hover:text-purple-600 hover:bg-gray-50'
                 }`}
               >
                 <ShieldCheck className="w-4 h-4 text-purple-600" />
@@ -106,37 +175,33 @@ export const Navbar: React.FC = () => {
               </Link>
             )}
 
-            {user && (
+            {/* GUEST NAV */}
+            {!user && (
               <>
                 <Link
-                  to="/offers"
+                  to="/price-history"
                   className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-1.5 ${
-                    isActive('/offers') ? 'bg-agri-50 text-agri-700' : 'text-gray-600 hover:text-agri-600 hover:bg-gray-50'
+                    isActive('/price-history')
+                      ? 'bg-agri-50 text-agri-700'
+                      : 'text-gray-600 hover:text-agri-600 hover:bg-gray-50'
                   }`}
                 >
-                  <Handshake className="w-4 h-4" />
-                  Offers & Negotiations
-                </Link>
-
-                <Link
-                  to="/deals"
-                  className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition-all ${
-                    isActive('/deals') ? 'bg-agri-50 text-agri-700' : 'text-gray-600 hover:text-agri-600 hover:bg-gray-50'
-                  }`}
-                >
-                  Deals & Reviews
+                  <TrendingUp className="w-4 h-4 text-agri-600" />
+                  Market Prices
                 </Link>
               </>
             )}
           </nav>
 
-          {/* User Auth Profile / Buttons */}
+          {/* User Auth Profile / Actions */}
           <div className="hidden md:flex items-center gap-3">
             {user ? (
               <div className="flex items-center gap-3 pl-3 border-l border-gray-200">
                 <div className="text-right">
                   <span className="block text-xs font-bold text-gray-900">{user.name}</span>
-                  <span className="block text-[11px] font-medium text-agri-700 uppercase tracking-wider">{user.role}</span>
+                  <span className="block text-[11px] font-semibold text-agri-700 uppercase tracking-wider">
+                    {user.role}
+                  </span>
                 </div>
                 <Button
                   variant="outline"
@@ -154,12 +219,12 @@ export const Navbar: React.FC = () => {
               <div className="flex items-center gap-2">
                 <Link to="/login">
                   <Button variant="outline" size="sm">
-                    Log In
+                    Sign In
                   </Button>
                 </Link>
                 <Link to="/register">
-                  <Button variant="primary" size="sm">
-                    Get Started 🌱
+                  <Button variant="primary" size="sm" className="bg-agri-600 hover:bg-agri-700">
+                    Get Started
                   </Button>
                 </Link>
               </div>
@@ -178,41 +243,78 @@ export const Navbar: React.FC = () => {
         </div>
       </div>
 
-      {/* Mobile Drawer */}
+      {/* Mobile Drawer (Header fallback menu) */}
       {mobileMenuOpen && (
         <div className="md:hidden border-b border-gray-200 bg-white px-4 pt-2 pb-4 space-y-2">
-          <Link
-            to="/price-discovery"
-            onClick={() => setMobileMenuOpen(false)}
-            className="block px-3 py-2 rounded-lg text-base font-semibold text-agri-700 bg-agri-50"
-          >
-            🔍 Find Best Opportunity
-          </Link>
-          <Link
-            to="/price-history"
-            onClick={() => setMobileMenuOpen(false)}
-            className="block px-3 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50"
-          >
-            Market Prices & Trends
-          </Link>
-
           {user?.role === 'FARMER' && (
-            <Link
-              to="/farmer/dashboard"
-              onClick={() => setMobileMenuOpen(false)}
-              className="block px-3 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50"
-            >
-              Farmer Dashboard
-            </Link>
+            <>
+              <Link
+                to="/farmer/dashboard"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3 py-2 rounded-lg text-base font-semibold text-gray-800 hover:bg-gray-50"
+              >
+                Farmer Home
+              </Link>
+              <Link
+                to="/farmer/add-produce"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3 py-2 rounded-lg text-base font-semibold text-agri-700 bg-agri-50"
+              >
+                + Sell Produce
+              </Link>
+              <Link
+                to="/price-discovery"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Find Buyers
+              </Link>
+              <Link
+                to="/offers"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Offers & Negotiations
+              </Link>
+            </>
           )}
+
           {user?.role === 'BUYER' && (
-            <Link
-              to="/buyer/dashboard"
-              onClick={() => setMobileMenuOpen(false)}
-              className="block px-3 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50"
-            >
-              Buyer Dashboard
-            </Link>
+            <>
+              <Link
+                to="/buyer/dashboard"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3 py-2 rounded-lg text-base font-semibold text-gray-800 hover:bg-gray-50"
+              >
+                Buyer Home
+              </Link>
+              <Link
+                to="/buyer/post-requirement"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3 py-2 rounded-lg text-base font-semibold text-sky-700 bg-sky-50"
+              >
+                + Post Requirement
+              </Link>
+              <Link
+                to="/marketplace/produce"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Find Farmers
+              </Link>
+            </>
+          )}
+
+          {!user && (
+            <>
+              <Link
+                to="/price-history"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Market Prices & Trends
+              </Link>
+            </>
           )}
 
           {user ? (
@@ -237,12 +339,12 @@ export const Navbar: React.FC = () => {
             <div className="pt-2 flex flex-col gap-2">
               <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
                 <Button variant="outline" className="w-full">
-                  Log In
+                  Sign In
                 </Button>
               </Link>
               <Link to="/register" onClick={() => setMobileMenuOpen(false)}>
-                <Button variant="primary" className="w-full">
-                  Register Account
+                <Button variant="primary" className="w-full bg-agri-600">
+                  Get Started
                 </Button>
               </Link>
             </div>
