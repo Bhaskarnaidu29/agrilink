@@ -88,9 +88,10 @@ export interface ProduceListing {
   crop: Crop;
   farmer?: {
     id: string;
+    userId?: string;
     farmName: string;
     city: string;
-    user: { name: string; phone: string };
+    user: { id?: string; name: string; phone: string };
   };
 }
 
@@ -112,10 +113,11 @@ export interface BuyerRequirement {
   crop: Crop;
   buyer?: {
     id: string;
+    userId?: string;
     companyName: string;
     businessType: string;
     rating: number;
-    user: { name: string; phone: string };
+    user: { id?: string; name: string; phone: string };
   };
 }
 

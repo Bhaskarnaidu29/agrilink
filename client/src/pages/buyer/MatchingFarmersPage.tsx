@@ -6,6 +6,7 @@ import { Target, CheckCircle2, MapPin, ArrowRight, UserCheck, ShieldCheck } from
 import { Button } from '../../components/ui/Button';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
+import { MakeOfferModal } from '../../components/common/MakeOfferModal';
 
 interface MatchItem {
   farmer: { id: string; name: string; farmName: string; phone: string; city: string };
@@ -24,6 +25,10 @@ export const MatchingFarmersPage: React.FC = () => {
   const [matches, setMatches] = useState<MatchItem[]>([]);
   const [allListings, setAllListings] = useState<ProduceListing[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+
+  // Make Offer Modal State
+  const [selectedListingForOffer, setSelectedListingForOffer] = useState<ProduceListing | null>(null);
+  const [makeOfferModalOpen, setMakeOfferModalOpen] = useState<boolean>(false);
 
   useEffect(() => {
     async function loadMatches() {
@@ -123,7 +128,10 @@ export const MatchingFarmersPage: React.FC = () => {
                   <Button
                     variant="primary"
                     className="w-full bg-sky-600 hover:bg-sky-700 mt-2"
-                    onClick={() => navigate('/offers')}
+                    onClick={() => {
+                      setSelectedListingForOffer(item.listing);
+                      setMakeOfferModalOpen(true);
+                    }}
                   >
                     Send Direct Offer <ArrowRight className="w-4 h-4 ml-1.5" />
                   </Button>
@@ -164,13 +172,28 @@ export const MatchingFarmersPage: React.FC = () => {
                 <Button
                   variant="primary"
                   className="w-full bg-sky-600 hover:bg-sky-700"
-                  onClick={() => navigate('/offers')}
+                  onClick={() => {
+                    setSelectedListingForOffer(item);
+                    setMakeOfferModalOpen(true);
+                  }}
                 >
                   Send Offer <ArrowRight className="w-4 h-4 ml-1.5" />
                 </Button>
               </Card>
             ))}
           </div>
+        )}
+
+        {/* MAKE OFFER MODAL */}
+        {makeOfferModalOpen && selectedListingForOffer && (
+          <MakeOfferModal
+            isOpen={makeOfferModalOpen}
+            onClose={() => {
+              setMakeOfferModalOpen(false);
+              setSelectedListingForOffer(null);
+            }}
+            listing={selectedListingForOffer}
+          />
         )}
       </div>
     </div>

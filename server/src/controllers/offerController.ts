@@ -24,13 +24,44 @@ export async function createOffer(req: AuthRequest, res: Response) {
     if (!req.user) return res.status(401).json({ message: 'Unauthorized' });
 
     const data = createOfferSchema.parse(req.body);
+    let targetReceiverId = data.receiverId;
+
+    if (data.produceListingId) {
+      const listing = await prisma.produceListing.findUnique({
+        where: { id: data.produceListingId },
+        include: { farmer: { include: { user: true } } },
+      });
+      if (!listing) {
+        return res.status(404).json({ message: 'Target produce listing not found' });
+      }
+      if (listing.farmer?.userId) {
+        targetReceiverId = listing.farmer.userId;
+      }
+      if (req.user.id === targetReceiverId) {
+        return res.status(400).json({ message: 'Cannot make an offer to your own listing' });
+      }
+    } else if (data.buyerRequirementId) {
+      const requirement = await prisma.buyerRequirement.findUnique({
+        where: { id: data.buyerRequirementId },
+        include: { buyer: { include: { user: true } } },
+      });
+      if (!requirement) {
+        return res.status(404).json({ message: 'Target buyer requirement not found' });
+      }
+      if (requirement.buyer?.userId) {
+        targetReceiverId = requirement.buyer.userId;
+      }
+      if (req.user.id === targetReceiverId) {
+        return res.status(400).json({ message: 'Cannot make an offer to your own requirement' });
+      }
+    }
 
     const totalAmount = Math.round(data.quantity * data.pricePerUnit);
 
     const offer = await prisma.offer.create({
       data: {
         senderId: req.user.id,
-        receiverId: data.receiverId,
+        receiverId: targetReceiverId,
         produceListingId: data.produceListingId,
         buyerRequirementId: data.buyerRequirementId,
         pricePerUnit: data.pricePerUnit,
@@ -193,8 +224,22 @@ export async function respondOfferStatus(req: AuthRequest, res: Response) {
 
     if (status === 'ACCEPTED') {
       // Determine Farmer & Buyer profiles
-      let farmerProfileId = offer.sender.farmerProfile?.id || offer.receiver.farmerProfile?.id;
-      let buyerProfileId = offer.sender.buyerProfile?.id || offer.receiver.buyerProfile?.id;
+      let farmerProfileId = offer.produceListing?.farmerId || offer.sender.farmerProfile?.id || offer.receiver.farmerProfile?.id;
+      let buyerProfileId = offer.buyerRequirement?.buyerId || offer.sender.buyerProfile?.id || offer.receiver.buyerProfile?.id;
+
+      if (!farmerProfileId) {
+        const farmerProf = await prisma.farmerProfile.findFirst({
+          where: { userId: { in: [offer.senderId, offer.receiverId] } }
+        });
+        farmerProfileId = farmerProf?.id;
+      }
+
+      if (!buyerProfileId) {
+        const buyerProf = await prisma.buyerProfile.findFirst({
+          where: { userId: { in: [offer.senderId, offer.receiverId] } }
+        });
+        buyerProfileId = buyerProf?.id;
+      }
 
       if (farmerProfileId && buyerProfileId) {
         await prisma.transaction.create({

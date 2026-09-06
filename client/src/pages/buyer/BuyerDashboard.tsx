@@ -9,6 +9,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Ca
 import { Badge } from '../../components/ui/Badge';
 import { Modal } from '../../components/ui/Modal';
 import { LocationPicker } from '../../components/common/LocationPicker';
+import { MakeOfferModal } from '../../components/common/MakeOfferModal';
 import { LocationResult } from '../../services/locationService';
 
 export const BuyerDashboard: React.FC = () => {
@@ -19,6 +20,10 @@ export const BuyerDashboard: React.FC = () => {
   const [offers, setOffers] = useState<Offer[]>([]);
   const [matchingFarmers, setMatchingFarmers] = useState<ProduceListing[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+
+  // Make Offer Modal State
+  const [selectedListingForOffer, setSelectedListingForOffer] = useState<ProduceListing | null>(null);
+  const [makeOfferModalOpen, setMakeOfferModalOpen] = useState<boolean>(false);
 
   // Edit Profile State
   const [editProfileOpen, setEditProfileOpen] = useState<boolean>(false);
@@ -306,7 +311,10 @@ export const BuyerDashboard: React.FC = () => {
                       variant="primary"
                       size="sm"
                       className="w-full bg-sky-600 hover:bg-sky-700 text-xs"
-                      onClick={() => navigate('/offers')}
+                      onClick={() => {
+                        setSelectedListingForOffer(item);
+                        setMakeOfferModalOpen(true);
+                      }}
                     >
                       Make Offer
                     </Button>
@@ -410,6 +418,18 @@ export const BuyerDashboard: React.FC = () => {
               </Button>
             </form>
           </Modal>
+        )}
+
+        {/* MAKE OFFER MODAL */}
+        {makeOfferModalOpen && selectedListingForOffer && (
+          <MakeOfferModal
+            isOpen={makeOfferModalOpen}
+            onClose={() => {
+              setMakeOfferModalOpen(false);
+              setSelectedListingForOffer(null);
+            }}
+            listing={selectedListingForOffer}
+          />
         )}
       </div>
     </div>

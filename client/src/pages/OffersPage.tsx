@@ -128,6 +128,11 @@ export const OffersPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {filteredOffers.map((offer) => {
               const cropName = offer.produceListing?.crop?.name || offer.buyerRequirement?.crop?.name || 'Harvest Produce';
+              const grade = offer.produceListing?.qualityGrade || offer.buyerRequirement?.qualityGrade || 'Grade A';
+              const locationCity = offer.produceListing?.locationCity || offer.buyerRequirement?.locationCity || '';
+              const farmerName = offer.produceListing?.farmer?.farmName || (offer.sender.role === 'FARMER' ? offer.sender.name : offer.receiver.name);
+              const buyerName = offer.buyerRequirement?.buyer?.companyName || (offer.sender.role === 'BUYER' ? offer.sender.name : offer.receiver.name);
+
               const statusVariant =
                 offer.status === 'ACCEPTED' ? 'success' :
                 offer.status === 'COUNTERED' ? 'warning' :
@@ -138,8 +143,13 @@ export const OffersPage: React.FC = () => {
                   <div className="flex justify-between items-start">
                     <div>
                       <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Offer #{offer.id.slice(0, 8)}</span>
-                      <h3 className="text-lg font-black text-gray-900 mt-0.5">{cropName}</h3>
-                      <p className="text-xs text-gray-500 font-medium">From: {offer.sender.name} ({offer.sender.role})</p>
+                      <h3 className="text-lg font-black text-gray-900 mt-0.5">{cropName} ({grade})</h3>
+                      <p className="text-xs text-gray-500 font-medium">
+                        Farmer: <span className="font-bold text-gray-800">{farmerName}</span> • Buyer: <span className="font-bold text-gray-800">{buyerName}</span>
+                      </p>
+                      {locationCity && (
+                        <p className="text-[11px] text-gray-500 font-semibold mt-0.5">📍 Location: {locationCity}</p>
+                      )}
                     </div>
                     <Badge variant={statusVariant}>{offer.status}</Badge>
                   </div>
@@ -153,6 +163,14 @@ export const OffersPage: React.FC = () => {
                       <span className="text-gray-500">Target Quantity:</span>
                       <span className="font-bold text-gray-900">{offer.quantity} kg</span>
                     </div>
+                    {offer.transportPayer && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Transport:</span>
+                        <span className="font-semibold text-gray-700">
+                          {offer.transportPayer === 'BUYER' ? 'Buyer Pickup' : offer.transportPayer === 'FARMER' ? 'Farmer Delivery' : 'Shared Split'}
+                        </span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-sm pt-2 border-t border-gray-200">
                       <span className="font-bold text-agri-800">Total Transaction Amount:</span>
                       <span className="font-black text-agri-600 text-base">₹{offer.totalAmount.toLocaleString('en-IN')}</span>
