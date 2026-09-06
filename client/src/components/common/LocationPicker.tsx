@@ -30,6 +30,7 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [selectedLocation, setSelectedLocation] = useState<LocationResult | null>(null);
+  const [pendingConfirmationLocation, setPendingConfirmationLocation] = useState<LocationResult | null>(null);
   const [isEditing, setIsEditing] = useState<boolean>(!value?.locationName && !value?.city);
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -110,11 +111,10 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
         try {
           const lat = pos.coords.latitude;
           const lon = pos.coords.longitude;
-          const loc = await reverseGeocodeLocation(lat, lon);
-          setSelectedLocation(loc);
-          setIsEditing(false);
+          const accuracy = pos.coords.accuracy;
+          const loc = await reverseGeocodeLocation(lat, lon, accuracy);
+          setPendingConfirmationLocation(loc);
           setIsOpen(false);
-          onChange(loc);
         } catch (err) {
           setErrorMsg('Failed to identify your location. Please search manually.');
         } finally {
@@ -134,11 +134,9 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
   };
 
   const handleSelectSuggestion = (loc: LocationResult) => {
-    setSelectedLocation(loc);
+    setPendingConfirmationLocation(loc);
     setQuery('');
     setIsOpen(false);
-    setIsEditing(false);
-    onChange(loc);
   };
 
   return (
@@ -165,6 +163,43 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
           >
             Change
           </button>
+        </div>
+      ) : pendingConfirmationLocation ? (
+        /* LOCATION CONFIRMATION STEP CARD */
+        <div className="p-3.5 bg-emerald-50 border border-emerald-300 rounded-2xl space-y-2 text-xs shadow-sm animate-fade-in">
+          <div className="flex items-start justify-between">
+            <div>
+              <span className="font-extrabold text-emerald-950 text-sm block">📍 Location Detected</span>
+              <span className="font-bold text-gray-900 text-xs block mt-0.5">{pendingConfirmationLocation.name}</span>
+              <span className="text-gray-600 text-[11px] block">{pendingConfirmationLocation.displayName}</span>
+              {pendingConfirmationLocation.accuracy && (
+                <span className="inline-block mt-1 px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-semibold text-[10px]">
+                  GPS Accuracy: ~{pendingConfirmationLocation.accuracy}m
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="flex gap-2 pt-1 border-t border-emerald-200">
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedLocation(pendingConfirmationLocation);
+                onChange(pendingConfirmationLocation);
+                setPendingConfirmationLocation(null);
+                setIsEditing(false);
+              }}
+              className="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1 shadow-xs"
+            >
+              <Check className="w-3.5 h-3.5" /> Confirm Location
+            </button>
+            <button
+              type="button"
+              onClick={() => setPendingConfirmationLocation(null)}
+              className="px-3 py-1.5 bg-white border border-gray-300 text-gray-700 font-semibold rounded-xl text-xs hover:bg-gray-50"
+            >
+              Change
+            </button>
+          </div>
         </div>
       ) : (
         /* SEARCH & GPS INPUT CONTROLS */

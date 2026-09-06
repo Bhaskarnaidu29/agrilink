@@ -144,10 +144,26 @@ export async function counterOffer(req: AuthRequest, res: Response) {
 
     const existingOffer = await prisma.offer.findUnique({
       where: { id },
+      include: {
+        negotiations: { orderBy: { createdAt: 'desc' } },
+      },
     });
 
     if (!existingOffer) {
       return res.status(404).json({ message: 'Offer not found' });
+    }
+
+    if (req.user.id !== existingOffer.senderId && req.user.id !== existingOffer.receiverId) {
+      return res.status(403).json({ message: 'You are not a participant in this offer' });
+    }
+
+    if (['ACCEPTED', 'REJECTED', 'CANCELLED'].includes(existingOffer.status)) {
+      return res.status(400).json({ message: `This offer is already ${existingOffer.status.toLowerCase()} and cannot be modified` });
+    }
+
+    const latestSenderId = existingOffer.negotiations?.[0]?.senderId || existingOffer.senderId;
+    if (req.user.id === latestSenderId) {
+      return res.status(403).json({ message: 'You cannot counter your own offer/counter. Please wait for the recipient response.' });
     }
 
     const totalAmount = Math.round(data.quantity * data.pricePerUnit);
@@ -175,11 +191,11 @@ export async function counterOffer(req: AuthRequest, res: Response) {
       },
     });
 
-    const otherUser = req.user.id === existingOffer.senderId ? existingOffer.receiverId : existingOffer.senderId;
+    const recipientId = req.user.id === existingOffer.senderId ? existingOffer.receiverId : existingOffer.senderId;
 
     await prisma.notification.create({
       data: {
-        userId: otherUser,
+        userId: recipientId,
         title: 'Counter Offer Received 🔄',
         message: `${req.user.name} countered with ₹${data.pricePerUnit}/kg for ${data.quantity} kg.`,
         type: 'OFFER',
@@ -210,11 +226,25 @@ export async function respondOfferStatus(req: AuthRequest, res: Response) {
         buyerRequirement: { include: { buyer: true } },
         sender: { include: { farmerProfile: true, buyerProfile: true } },
         receiver: { include: { farmerProfile: true, buyerProfile: true } },
+        negotiations: { orderBy: { createdAt: 'desc' } },
       },
     });
 
     if (!offer) {
       return res.status(404).json({ message: 'Offer not found' });
+    }
+
+    if (req.user.id !== offer.senderId && req.user.id !== offer.receiverId) {
+      return res.status(403).json({ message: 'You are not a participant in this offer' });
+    }
+
+    if (['ACCEPTED', 'REJECTED', 'CANCELLED'].includes(offer.status)) {
+      return res.status(400).json({ message: `This offer is already ${offer.status.toLowerCase()} and cannot be modified` });
+    }
+
+    const latestSenderId = offer.negotiations?.[0]?.senderId || offer.senderId;
+    if (req.user.id === latestSenderId) {
+      return res.status(403).json({ message: 'You cannot accept or reject your own offer/counter. Please wait for recipient response.' });
     }
 
     const updatedOffer = await prisma.offer.update({

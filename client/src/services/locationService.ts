@@ -12,6 +12,7 @@ export interface LocationResult {
   postalCode?: string;
   latitude: number;
   longitude: number;
+  accuracy?: number;
 }
 
 // In-memory cache for recent search queries to minimize API calls
@@ -121,7 +122,7 @@ export async function searchLocations(query: string): Promise<LocationResult[]> 
 /**
  * Reverse geocodes latitude/longitude coordinates into a specific local place hierarchy.
  */
-export async function reverseGeocodeLocation(latitude: number, longitude: number): Promise<LocationResult> {
+export async function reverseGeocodeLocation(latitude: number, longitude: number, accuracy?: number): Promise<LocationResult> {
   try {
     const url = `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&addressdetails=1`;
     const res = await axios.get(url, { timeout: 5000 });
@@ -158,6 +159,7 @@ export async function reverseGeocodeLocation(latitude: number, longitude: number
         postalCode: addr.postcode,
         latitude,
         longitude,
+        accuracy: accuracy ? Math.round(accuracy) : undefined,
       };
     }
   } catch (err) {
@@ -171,5 +173,6 @@ export async function reverseGeocodeLocation(latitude: number, longitude: number
     displayName: 'Detected Location',
     latitude,
     longitude,
+    accuracy: accuracy ? Math.round(accuracy) : undefined,
   };
 }
