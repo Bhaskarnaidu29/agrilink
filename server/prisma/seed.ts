@@ -4,7 +4,7 @@ import * as bcrypt from 'bcryptjs';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Starting AgriLink Database Seeding (MySQL)...');
+  console.log('🌱 Starting AgriLink Database Seeding (MongoDB)...');
 
   // Clean existing tables in reverse dependency order
   await prisma.notification.deleteMany();
@@ -402,7 +402,7 @@ async function main() {
     },
   });
 
-  console.log('🌱 AgriLink MySQL Database Seeding Completed Successfully!');
+  console.log('🌱 AgriLink MongoDB Database Seeding Completed Successfully!');
 }
 
 main()

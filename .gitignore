@@ -23,6 +23,7 @@ client/.env
 # MySQL Data & Local Server Configs
 server/mysql_data/
 server/my.ini
+server/start_mysql.bat
 
 # SQLite / Database dumps
 *.db

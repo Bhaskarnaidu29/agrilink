@@ -4,21 +4,37 @@
 
 ---
 
+## 🍃 MongoDB & MongoDB Atlas Setup Guide
+
+AgriLink uses **MongoDB** as its primary database powered by **Prisma ORM**. No local database installation (like MySQL) is required on new laptops if you use **MongoDB Atlas** (Free Cloud Database).
+
+---
+
 ## 🛠️ Prerequisites for New Laptop Setup
 
-Before setting up AgriLink on a new laptop, ensure you have installed:
+1. **Node.js (v18 or v20 LTS)**: [https://nodejs.org/](https://nodejs.org/)
+2. **Git** *(Optional if using ZIP download)*: [https://git-scm.com/](https://git-scm.com/)
+3. **MongoDB Connection URL**: Either a free **MongoDB Atlas** cloud URL or local **MongoDB Community Server**.
 
-1. **Git**: [https://git-scm.com/](https://git-scm.com/)
-2. **Node.js (v18 or v20 LTS)**: [https://nodejs.org/](https://nodejs.org/)
-3. **MySQL Server (v8.0 or v8.4)**: [https://dev.mysql.com/downloads/installer/](https://dev.mysql.com/downloads/installer/) *(or MySQL running via Docker/XAMPP)*
+---
+
+## ☁️ Setting Up MongoDB Atlas (Free Cloud Database)
+
+1. Go to **[MongoDB Atlas](https://www.mongodb.com/cloud/atlas/register)** and sign up for a free account.
+2. Create a **Free Shared Cluster (M0)**.
+3. Under **Database Access**, create a database user (e.g., `agrilink_user`) and password.
+4. Under **Network Access**, click **Add IP Address** $\rightarrow$ Click **Allow Access from Anywhere** (`0.0.0.0/0`).
+5. Click **Connect** $\rightarrow$ Choose **Drivers** $\rightarrow$ Copy the Connection String:
+   ```text
+   mongodb+srv://<username>:<password>@cluster0.xxx.mongodb.net/agrilink?retryWrites=true&w=majority
+   ```
 
 ---
 
 ## 🚀 Complete Step-by-Step Setup Guide
 
-### Step 1: Clone Repository from GitHub
-Open Terminal / PowerShell on your new laptop and clone the project:
-
+### Step 1: Get the Code
+Clone or download the project folder:
 ```bash
 git clone https://github.com/Bhaskarnaidu29/agrilink.git
 cd agrilink
@@ -26,17 +42,7 @@ cd agrilink
 
 ---
 
-### Step 2: Database Setup (MySQL)
-
-1. Make sure your local **MySQL Server** is running on port `3306`.
-2. Open MySQL Workbench or terminal and create the database:
-   ```sql
-   CREATE DATABASE agrilink;
-   ```
-
----
-
-### Step 3: Backend Setup (Server)
+### Step 2: Backend Setup (`server`)
 
 1. Navigate into the `server` directory:
    ```bash
@@ -50,25 +56,30 @@ cd agrilink
    ```bash
    cp .env.example .env
    ```
-   *Edit `.env` and set your MySQL username and password:*
+   *Edit `.env` and set your MongoDB Atlas connection string:*
    ```env
    PORT=5000
-   DATABASE_URL="mysql://root:YOUR_MYSQL_PASSWORD@localhost:3306/agrilink"
+   DATABASE_URL="mongodb+srv://agrilink_user:YOUR_PASSWORD@cluster0.xxx.mongodb.net/agrilink?retryWrites=true&w=majority"
    JWT_SECRET="agrilink_super_secret_jwt_key_2026_sih"
    NODE_ENV="development"
    ```
 
-4. Push Prisma Schema to MySQL Database:
+4. Generate Prisma Client for MongoDB:
+   ```bash
+   npx prisma generate
+   ```
+
+5. Push Collections & Indexes to MongoDB:
    ```bash
    npx prisma db push
    ```
 
-5. Seed Database with APMC Mandis, Crops & Historical Prices:
+6. Seed Database with APMC Mandis, Crops & Historical Prices:
    ```bash
    npx prisma db seed
    ```
 
-6. Start Backend Server:
+7. Start Backend Server:
    ```bash
    npm run dev
    ```
@@ -76,7 +87,7 @@ cd agrilink
 
 ---
 
-### Step 4: Frontend Setup (Client)
+### Step 3: Frontend Setup (`client`)
 
 1. Open a new Terminal window and navigate into the `client` directory:
    ```bash
@@ -94,13 +105,13 @@ cd agrilink
 
 ---
 
-### 🧪 Step 5: Run Verification Test Suite
+### 🧪 Step 4: Run Verification Tests
 
-To verify that MySQL database, Prisma ORM, Auth JWT, Price Engine, and All 10 User Flows work properly:
+To verify that MongoDB database, Prisma ORM, Auth JWT, Price Engine, and All 10 User Flows work properly:
 
 ```bash
 cd server
-npx ts-node src/utils/testMySQLFlow.ts
+npx ts-node src/utils/testMongoFlow.ts
 ```
 
 To run the 14-step Tomato Produce Demonstration:
@@ -122,7 +133,7 @@ agrilink/
 │   └── package.json
 ├── server/                # Node.js + Express + TypeScript Backend
 │   ├── prisma/
-│   │   ├── schema.prisma  # MySQL Database Schema
+│   │   ├── schema.prisma  # MongoDB Prisma Database Schema
 │   │   └── seed.ts        # APMC Data Seed Script
 │   ├── src/
 │   │   ├── controllers/   # Auth, Farmer, Buyer, Transaction logic

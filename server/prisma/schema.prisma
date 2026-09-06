@@ -3,49 +3,49 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "mongodb"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id           String         @id @default(uuid())
-  email        String         @unique
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  email        String   @unique
   passwordHash String
-  role         String         // FARMER, BUYER, ADMIN
+  role         String   // FARMER, BUYER, ADMIN
   name         String
   phone        String
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  farmerProfile FarmerProfile?
-  buyerProfile  BuyerProfile?
-  sentOffers    Offer[]        @relation("SentOffers")
-  receivedOffers Offer[]       @relation("ReceivedOffers")
-  notifications Notification[]
-  reviewsGiven  Review[]       @relation("ReviewsGiven")
-  reviewsReceived Review[]     @relation("ReviewsReceived")
+  farmerProfile   FarmerProfile?
+  buyerProfile    BuyerProfile?
+  sentOffers      Offer[]        @relation("SentOffers")
+  receivedOffers  Offer[]        @relation("ReceivedOffers")
+  notifications   Notification[]
+  reviewsGiven    Review[]       @relation("ReviewsGiven")
+  reviewsReceived Review[]       @relation("ReviewsReceived")
 }
 
 model FarmerProfile {
-  id          String   @id @default(uuid())
-  userId      String   @unique
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  farmName    String
-  address     String
-  city        String
-  state       String
-  latitude    Float
-  longitude   Float
-  verified    Boolean  @default(true)
-  createdAt   DateTime @default(now())
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @unique @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  farmName  String
+  address   String
+  city      String
+  state     String
+  latitude  Float
+  longitude Float
+  verified  Boolean  @default(true)
+  createdAt DateTime @default(now())
 
   produceListings ProduceListing[]
-  transactions    Transaction[]   @relation("FarmerTransactions")
+  transactions    Transaction[]    @relation("FarmerTransactions")
 }
 
 model BuyerProfile {
-  id           String   @id @default(uuid())
-  userId       String   @unique
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId       String   @unique @db.ObjectId
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   companyName  String
   businessType String   // Wholesaler, Retailer, Restaurant, Food Processor, Exporter, Institutional Buyer
@@ -63,21 +63,21 @@ model BuyerProfile {
 }
 
 model Crop {
-  id          String   @id @default(uuid())
-  name        String   @unique
-  category    String   // Vegetables, Fruits, Grains, Spices, Commercial
-  defaultUnit String   @default("kg")
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  name        String  @unique
+  category    String  // Vegetables, Fruits, Grains, Spices, Commercial
+  defaultUnit String  @default("kg")
   imageUrl    String?
   description String?
 
-  marketPrices     MarketPrice[]
-  priceHistories   PriceHistory[]
-  produceListings  ProduceListing[]
+  marketPrices      MarketPrice[]
+  priceHistories    PriceHistory[]
+  produceListings   ProduceListing[]
   buyerRequirements BuyerRequirement[]
 }
 
 model Market {
-  id        String   @id @default(uuid())
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
   name      String
   city      String
   state     String
@@ -91,10 +91,10 @@ model Market {
 }
 
 model MarketPrice {
-  id           String   @id @default(uuid())
-  marketId     String
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  marketId     String   @db.ObjectId
   market       Market   @relation(fields: [marketId], references: [id], onDelete: Cascade)
-  cropId       String
+  cropId       String   @db.ObjectId
   crop         Crop     @relation(fields: [cropId], references: [id], onDelete: Cascade)
   pricePerUnit Float
   minPrice     Float
@@ -106,10 +106,10 @@ model MarketPrice {
 }
 
 model PriceHistory {
-  id           String   @id @default(uuid())
-  marketId     String
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  marketId     String   @db.ObjectId
   market       Market   @relation(fields: [marketId], references: [id], onDelete: Cascade)
-  cropId       String
+  cropId       String   @db.ObjectId
   crop         Crop     @relation(fields: [cropId], references: [id], onDelete: Cascade)
   date         DateTime
   averagePrice Float
@@ -121,15 +121,15 @@ model PriceHistory {
 }
 
 model ProduceListing {
-  id           String   @id @default(uuid())
-  farmerId     String
+  id           String        @id @default(auto()) @map("_id") @db.ObjectId
+  farmerId     String        @db.ObjectId
   farmer       FarmerProfile @relation(fields: [farmerId], references: [id], onDelete: Cascade)
-  cropId       String
+  cropId       String        @db.ObjectId
   crop         Crop          @relation(fields: [cropId], references: [id], onDelete: Cascade)
-  variety      String   @default("Standard")
+  variety      String        @default("Standard")
   quantity     Float
-  unit         String   @default("kg")
-  qualityGrade String   @default("Grade A") // Grade A, Grade B, Grade C
+  unit         String        @default("kg")
+  qualityGrade String        @default("Grade A") // Grade A, Grade B, Grade C
   harvestDate  DateTime
   sellingDate  DateTime
   locationCity String
@@ -137,10 +137,10 @@ model ProduceListing {
   longitude    Float
   minPrice     Float
   imageUrl     String?
-  description  String? @db.Text
-  status       String   @default("ACTIVE") // ACTIVE, SOLD, CANCELLED
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  description  String?
+  status       String        @default("ACTIVE") // ACTIVE, SOLD, CANCELLED
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 
   offers       Offer[]
   transactions Transaction[]
@@ -151,23 +151,23 @@ model ProduceListing {
 }
 
 model BuyerRequirement {
-  id             String   @id @default(uuid())
-  buyerId        String
+  id             String       @id @default(auto()) @map("_id") @db.ObjectId
+  buyerId        String       @db.ObjectId
   buyer          BuyerProfile @relation(fields: [buyerId], references: [id], onDelete: Cascade)
-  cropId         String
+  cropId         String       @db.ObjectId
   crop           Crop         @relation(fields: [cropId], references: [id], onDelete: Cascade)
-  variety        String   @default("Standard")
+  variety        String       @default("Standard")
   quantityNeeded Float
-  unit           String   @default("kg")
-  qualityGrade   String   @default("Grade A")
+  unit           String       @default("kg")
+  qualityGrade   String       @default("Grade A")
   offeredPrice   Float
   requiredDate   DateTime
   locationCity   String
   latitude       Float
   longitude      Float
-  status         String   @default("OPEN") // OPEN, FULFILLED, EXPIRED
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  status         String       @default("OPEN") // OPEN, FULFILLED, EXPIRED
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
   offers       Offer[]
   transactions Transaction[]
@@ -178,20 +178,20 @@ model BuyerRequirement {
 }
 
 model Offer {
-  id                 String             @id @default(uuid())
-  produceListingId   String?
+  id                 String             @id @default(auto()) @map("_id") @db.ObjectId
+  produceListingId   String?            @db.ObjectId
   produceListing     ProduceListing?    @relation(fields: [produceListingId], references: [id], onDelete: SetNull)
-  buyerRequirementId String?
+  buyerRequirementId String?            @db.ObjectId
   buyerRequirement   BuyerRequirement?  @relation(fields: [buyerRequirementId], references: [id], onDelete: SetNull)
-  senderId           String
+  senderId           String             @db.ObjectId
   sender             User               @relation("SentOffers", fields: [senderId], references: [id], onDelete: Cascade)
-  receiverId         String
+  receiverId         String             @db.ObjectId
   receiver           User               @relation("ReceivedOffers", fields: [receiverId], references: [id], onDelete: Cascade)
   pricePerUnit       Float
   quantity           Float
   transportPayer     String             @default("BUYER") // BUYER, FARMER, SHARED
   totalAmount        Float
-  message            String? @db.Text
+  message            String?
   status             String             @default("PENDING") // PENDING, COUNTERED, ACCEPTED, REJECTED, CANCELLED
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
@@ -205,29 +205,29 @@ model Offer {
 }
 
 model NegotiationHistory {
-  id           String   @id @default(uuid())
-  offerId      String
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  offerId      String   @db.ObjectId
   offer        Offer    @relation(fields: [offerId], references: [id], onDelete: Cascade)
-  senderId     String
+  senderId     String   @db.ObjectId
   pricePerUnit Float
   quantity     Float
-  note         String? @db.Text
+  note         String?
   createdAt    DateTime @default(now())
 
   @@index([offerId])
 }
 
 model Transaction {
-  id                 String            @id @default(uuid())
-  offerId            String?           @unique
+  id                 String            @id @default(auto()) @map("_id") @db.ObjectId
+  offerId            String?           @unique @db.ObjectId
   offer              Offer?            @relation(fields: [offerId], references: [id], onDelete: SetNull)
-  produceListingId   String?
+  produceListingId   String?           @db.ObjectId
   produceListing     ProduceListing?   @relation(fields: [produceListingId], references: [id], onDelete: SetNull)
-  buyerRequirementId String?
+  buyerRequirementId String?           @db.ObjectId
   buyerRequirement   BuyerRequirement? @relation(fields: [buyerRequirementId], references: [id], onDelete: SetNull)
-  farmerId           String
+  farmerId           String            @db.ObjectId
   farmer             FarmerProfile     @relation("FarmerTransactions", fields: [farmerId], references: [id], onDelete: Cascade)
-  buyerId            String
+  buyerId            String            @db.ObjectId
   buyer              BuyerProfile      @relation("BuyerTransactions", fields: [buyerId], references: [id], onDelete: Cascade)
   agreedPrice        Float
   totalAmount        Float
@@ -245,32 +245,32 @@ model Transaction {
 }
 
 model Review {
-  id            String      @id @default(uuid())
-  transactionId String      @unique
+  id            String      @id @default(auto()) @map("_id") @db.ObjectId
+  transactionId String      @unique @db.ObjectId
   transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
-  reviewerId    String
+  reviewerId    String      @db.ObjectId
   reviewer      User        @relation("ReviewsGiven", fields: [reviewerId], references: [id], onDelete: Cascade)
-  revieweeId    String
+  revieweeId    String      @db.ObjectId
   reviewee      User        @relation("ReviewsReceived", fields: [revieweeId], references: [id], onDelete: Cascade)
   rating        Int         // 1 to 5 stars
-  comment       String @db.Text
+  comment       String
   createdAt     DateTime    @default(now())
 }
 
 model TransportRate {
-  id             String   @id @default(uuid())
-  baseFee        Float    @default(200)   // Flat base fee ₹200
-  ratePerKmPerTon Float   @default(15)    // ₹15 per km per ton
-  minDistance    Float    @default(5)     // 5 km min
-  updatedAt      DateTime @updatedAt
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  baseFee         Float    @default(200) // Flat base fee ₹200
+  ratePerKmPerTon Float    @default(15) // ₹15 per km per ton
+  minDistance     Float    @default(5) // 5 km min
+  updatedAt       DateTime @updatedAt
 }
 
 model Notification {
-  id        String   @id @default(uuid())
-  userId    String
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   title     String
-  message   String @db.Text
+  message   String
   type      String   // OFFER, DEALS, MARKET_UPDATE, SYSTEM
   isRead    Boolean  @default(false)
   link      String?
